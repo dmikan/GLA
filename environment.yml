@@ -2,15 +2,12 @@ name: gas_lift_env
 channels:
   - snowflake
 dependencies:
-  - python=3.8
   - matplotlib
   - numpy
   - pandas
   - plotly
   - pulp
-  - pyodbc
   - python-dotenv
-  - redis
   - scikit-learn
   - scipy
   - snowflake-connector-python
