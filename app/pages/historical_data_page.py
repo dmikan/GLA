@@ -1,5 +1,5 @@
 import streamlit as st
-from components.historical_data.historical_data_component import HistoricalDataComponents
+from app.components.historical_data.historical_data_component import HistoricalDataComponents
 
 class HistoricalPage:
     def show(self):

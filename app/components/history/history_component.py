@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from backend.services.optimization_service import OptimizationService
 from backend.models.database import SnowflakeDB
-from components.optimization.optimization_constrained_results import OptimizationConstrainedResults
+from app.components.optimization.optimization_constrained_results import OptimizationConstrainedResults
 
 class HistoryComponent:
     def __init__(self):

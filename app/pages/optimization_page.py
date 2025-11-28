@@ -1,8 +1,8 @@
 import streamlit as st
 from pathlib import Path
-from components.file_upload.file_upload_component import FileUploadComponent
-from components.optimization.optimization_charts import OptimizationChartsComponent
-from components.history.history_component import HistoryComponent
+from app.components.file_upload.file_upload_component import FileUploadComponent
+from app.components.optimization.optimization_charts import OptimizationChartsComponent
+from app.components.history.history_component import HistoryComponent
 from backend.models.database import SnowflakeDB
 
 class OptimizationPage:

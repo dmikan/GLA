@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from components.utils.style_utils import ChartStyle
+from app.components.utils.style_utils import ChartStyle
 
 class OptimizationGlobalResults:
     def __init__(self):

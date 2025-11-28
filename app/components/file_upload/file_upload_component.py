@@ -2,7 +2,7 @@ import streamlit as st
 from pathlib import Path
 import pandas as pd
 from io import StringIO
-from components.file_upload.manual_input_component import ManualInputComponent
+from app.components.file_upload.manual_input_component import ManualInputComponent
 
 class FileUploadComponent:
     def __init__(self):

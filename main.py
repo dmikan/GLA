@@ -3,9 +3,9 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import streamlit as st
-from pages.optimization_page import OptimizationPage
-from pages.other_services_page import OtherServicesPage
-from pages.historical_data_page import HistoricalPage
+from app.pages.optimization_page import OptimizationPage
+from app.pages.other_services_page import OtherServicesPage
+from app.pages.historical_data_page import HistoricalPage
 
 def main():
     # Configuración inicial

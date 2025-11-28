@@ -7,9 +7,9 @@ from backend.services.data_loader_service import DataLoader
 from backend.services.optimization_service import OptimizationService
 from backend.services.well_result_service import WellResultService
 from backend.models.database import SnowflakeDB
-from components.optimization.optimization_constrained_results import OptimizationConstrainedResults
-from components.optimization.optimization_global_results import OptimizationGlobalResults
-from components.utils.style_utils import ChartStyle
+from app.components.optimization.optimization_constrained_results import OptimizationConstrainedResults
+from app.components.optimization.optimization_global_results import OptimizationGlobalResults
+from app.components.utils.style_utils import ChartStyle
 
 class OptimizationChartsComponent:
     def __init__(self):
