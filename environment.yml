@@ -11,5 +11,6 @@ dependencies:
   - scikit-learn
   - scipy
   - snowflake-connector-python
+  - snowflake-snowpark-python
   - streamlit
 
