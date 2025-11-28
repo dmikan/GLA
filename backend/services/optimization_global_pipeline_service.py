@@ -1,0 +1,141 @@
+from backend.services.optimization_model_service import OptimizationModel
+import numpy as np
+
+class OptimizationGlobalPipelineService:
+    """Handles the complete optimization workflow from data processing to solution"""
+    
+    def __init__(self, 
+                q_gl_range: np.ndarray,
+                y_pred_list: list,
+                qgl_min: int = 0,
+                p_qoil: float = 0.0,
+                p_qgl: float = 0.0,
+                max_iterations: int = 40,
+                max_qgl: int = 20000):
+        """
+        Initialize the optimization pipeline with required parameters
+        
+        Args:
+            q_gl_range: Array of gas lift injection rates
+            y_pred_list: List of well production predictions
+            qgl_limit: Total gas lift availability constraint
+            p_qoil: Oil price for economic calculation
+            p_qgl: Gas lift cost for economic calculation
+        """
+        self.q_gl_range = q_gl_range
+        self.y_pred_list = y_pred_list
+        self.p_qoil = p_qoil
+        self.p_qgl = p_qgl
+        self.model = None
+        self.result_prod_rates = None
+        self.result_optimal_qgl = None
+        self.current_qgl = None
+        self.optimization_results = {"qgl_limit": [], "total_production": [], "total_qgl": []}
+        self.qgl_history = []
+        self.qgl_min = 0
+        self.max_iterations = max_iterations
+        self.max_qgl = max_qgl
+
+
+    ''' 
+    this method runs the optimization pipeline for a range of gas lift injection rates
+    it uses a logspace to generate the range of gas lift injection rates and 
+    it runs the optimization pipeline for each gas lift injection rate
+    it returns the optimization results
+    '''
+    def run(self):
+        log_vals = np.logspace(start=1, stop=np.log10(self.max_qgl), num=self.max_iterations)
+        log_vals = np.unique(log_vals)
+        for i, qgl_limit in enumerate(log_vals): 
+            dic_optim_result = self.execute(qgl_limit)
+            qgl_history = self._list_optim(dic_optim_result, qgl_limit)
+            if self._has_stabilized(values=qgl_history):
+                break     
+        return self.optimization_results
+
+    ''' 
+    this method checks if the gas lift injection rate has stabilized 
+    it uses a window size to check if the gas lift injection rate has stabilized
+    it returns True if the gas lift injection rate has stabilized
+    '''               
+    def _has_stabilized(self, values, window_size=3, tolerance=1e-6):
+            if len(values) < window_size:
+                return False
+            recent = values[-window_size:]
+            return all(abs(x - recent[0]) < tolerance for x in recent)
+
+    ''' 
+    this method calculates the optimal gas lift rates using marginal analysis 
+    it returns the optimal gas lift rates for each well 
+    '''
+    def _calculate_marginal_analysis(self) -> list:
+        delta_q_gl = np.diff(self.q_gl_range)
+        p_qgl_optim_list = []
+        
+        for well in range(len(self.y_pred_list)):
+            delta_q_oil = np.diff(self.y_pred_list[well])
+            mp = delta_q_oil / delta_q_gl  # Marginal Product
+            mrp = self.p_qoil * mp  # Marginal Revenue Product
+            qgl_values = self.q_gl_range[:-1]
+            
+            # Find last point where MRP >= gas lift cost
+            optimal_idx = np.where(mrp >= self.p_qgl)[0][-1] if any(mrp >= self.p_qgl) else len(mrp)-1
+            p_qgl_optim_list.append(qgl_values[optimal_idx])      
+        return p_qgl_optim_list
+
+    ''' 
+    this method sets up the optimization model and configure the optimization model 
+    with parameters
+    '''
+    def _setup_optimization_model(self, p_qgl_optim_list: list, qgl_limit: int) -> None:
+        self.model = OptimizationModel(
+            q_gl=self.q_gl_range,
+            q_fluid_wells=self.y_pred_list,
+            available_qgl_total=qgl_limit,
+            qgl_min=self.qgl_min,
+            p_qgl_list=p_qgl_optim_list
+        )
+        self.model.define_optimisation_problem()
+        self.model.define_variables()
+        self.model.build_objective_function()
+        self.model.add_constraints()
+
+
+    ''' 
+    this method runs the complete optimization pipeline using the other methods
+    it returns the optimization results
+    '''
+    def execute(self, qgl_limit) -> dict:
+        p_qgl_optim_list = self._calculate_marginal_analysis() # Step 1: Marginal analysis 
+        self._setup_optimization_model(p_qgl_optim_list, qgl_limit) # Step 2: Model setup
+        self.model.solve_prob() # Step 3: Solve optimization
+        self.result_prod_rates = self.model.get_maximised_prod_rates() # Step 4: Get results
+        self.result_optimal_qgl = self.model.get_optimal_injection_rates()  
+        return self._format_results(qgl_limit)
+
+
+    ''' 
+    this method formats the results into a dictionary
+    it returns the formatted results
+    '''
+    def _format_results(self, qgl_limit) -> dict:
+        return {
+            "total_production": sum(self.result_prod_rates),
+            "total_qgl": sum(self.result_optimal_qgl),
+            "qgl_limit": qgl_limit,
+            "well_production_rates": self.result_prod_rates,
+            "well_gas_injection_rates": self.result_optimal_qgl
+        }
+
+    ''' 
+    this method stores the optimization results in a list
+    it returns the list of optimization results
+    '''
+    def _list_optim(self, dic_optim_result, qgl_limit):
+        """Run the complete optimization pipeline"""
+        current_qgl = dic_optim_result["total_qgl"]
+        self.optimization_results["qgl_limit"].append(qgl_limit)
+        self.optimization_results["total_production"].append(dic_optim_result["total_production"])
+        self.optimization_results["total_qgl"].append(dic_optim_result["total_qgl"])
+        self.qgl_history.append(current_qgl)
+        return self.qgl_history

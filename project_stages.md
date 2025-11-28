@@ -1,0 +1,1 @@
+20. hacer las entidades dinámicas por si es necesario modificar algun tipo de dato, que se sincrenice autimáticamente con el sql. 
