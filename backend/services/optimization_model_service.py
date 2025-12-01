@@ -97,7 +97,7 @@ class OptimizationModel:
 if __name__ == "__main__":
     path_data = './data/fitted_curves.csv'
     data = DataLoader(path_data)
-    q_gl,q_oil = data.load_data()
+    q_gl,q_oil = data.load_data_csv()
     model = OptimizationModel(q_gl, q_oil, 10)
     model.define_optimisation_problem()
     model.define_variables()

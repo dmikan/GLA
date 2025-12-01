@@ -2,6 +2,31 @@ import streamlit as st
 import pandas as pd
 
 class ManualInputComponent:
+    def __init__(self, tmp_dir):
+        self.tmp_dir = tmp_dir
+
+    def load(self):
+        manual_data = self._handle_manual_input()
+        if manual_data is not None and manual_data[1]:
+            st.session_state.data_load_mode = "manual_input"
+            st.session_state.temp_path = manual_data[1]   
+
+    def _handle_manual_input(self):
+        manual_data_df = self._show()
+        if manual_data_df is not None and not manual_data_df.empty:
+            df = manual_data_df
+            nombre_planta = df.iloc[2, 0] if len(df) > 2 and not pd.isna(df.iloc[2, 0]) else "manual_data"
+            temp_path = self.tmp_dir / f"data_{nombre_planta.lower().replace(' ', '_')}.csv"
+            
+            if st.button("Guardar datos manuales"):
+                try:
+                    df.to_csv(temp_path, index=False, header=False) 
+                    st.success(f"Datos manuales guardados correctamente.")
+                    st.session_state.uploaded_file = df
+                    return df, temp_path
+                except Exception as e:
+                    st.error(f"Error al guardar los datos: {e}")
+        return None, None 
 
     def _create_input_dataframe(self, num_wells, num_filas, input_columns_info, production_columns):
         input_df_info = pd.DataFrame(
@@ -43,7 +68,7 @@ class ManualInputComponent:
         
         return final_df
 
-    def show(self):
+    def _show(self):
         st.subheader("Configuración")
         col1, col2 = st.columns(2)
         
