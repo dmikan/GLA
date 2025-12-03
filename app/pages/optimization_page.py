@@ -27,15 +27,17 @@ class OptimizationPage:
 
         with tab1:
             if is_data_ready:
-                loaded_data = loader.load_data_ui()
-                optimization_settings.show_global_optimization(loaded_data)
+                loaded_data = loader.load_data()
+                optimization_settings.show_global_settings()
+                optimization_settings.run_optimization(loaded_data)
             else:
                 st.warning("Please load data first to perform the optimization")
 
         with tab2:
             if is_data_ready:
-                loaded_data = loader.load_data_ui()
-                optimization_settings.show_constrained_optimization(loaded_data)
+                loaded_data = loader.load_data()
+                optimization_settings.show_constrained_settings()
+                optimization_settings.run_constrained_optimization(loaded_data)
             else:
                 st.warning("Please load data first to perform the optimization")
 

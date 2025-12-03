@@ -23,12 +23,7 @@ class OptimizationSettingsComponent:
     Method to show the global optimization.
     Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
     '''
-    def show_global_optimization(self, loaded_data):
-        q_gl_list, q_oil_list, list_info = loaded_data
-
-        if not q_gl_list:
-             st.warning("No valid data loaded to execute global optimization.")
-             return
+    def show_global_settings(self):
 
         with st.expander("Global Optimization Configuration", expanded=True):
             
@@ -63,8 +58,16 @@ class OptimizationSettingsComponent:
                     value=300,
                     step=100,
                     key="qgl_min_global"
-                )      
+                )              
         
+    def run_optimization(self, loaded_data):
+
+        q_gl_list, q_oil_list, list_info = loaded_data
+
+        if not q_gl_list:
+             st.warning("No valid data loaded to execute global optimization.")
+             return
+    
         if st.button("Global Optimization"):    
             with st.spinner("Processing data..."):
                 try:
@@ -100,12 +103,7 @@ class OptimizationSettingsComponent:
     Method to show the constrained optimization.
     Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
     '''
-    def show_constrained_optimization(self, loaded_data):
-        q_gl_list, q_oil_list, list_info = loaded_data
-
-        if not q_gl_list:
-             st.warning("There are no valid data loaded to execute the constrained optimization.")
-             return
+    def show_constrained_settings(self, loaded_data):
 
         with st.expander("Configuration of Optimization", expanded=True):
             
@@ -155,6 +153,14 @@ class OptimizationSettingsComponent:
                     key="p_qgl"
                 )
 
+def run_constrained_optimization(self, loaded_data):
+        q_gl_list, q_oil_list, list_info = loaded_data
+
+        if not q_gl_list:
+             st.warning("There are no valid data loaded to execute the constrained optimization.")
+             return
+
+        
         if st.button("Execute Constrained Optimization"):
             with st.spinner("Processing data..."):
                 try:                    
