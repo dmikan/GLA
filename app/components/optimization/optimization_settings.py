@@ -20,8 +20,8 @@ class OptimizationSettingsComponent:
         self.db = db
 
     '''
-    Método para mostrar la optimización global.
-    Agora recebe os dados pré-processados como uma tupla: (QGL_lists, Qprod_lists, Metadata_list).
+    Method to show the global optimization.
+    Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
     '''
     def show_global_optimization(self, loaded_data):
         q_gl_list, q_oil_list, list_info = loaded_data
@@ -68,18 +68,16 @@ class OptimizationSettingsComponent:
         if st.button("Global Optimization"):    
             with st.spinner("Processing data..."):
                 try:
-                    # **NOTA:** We use q_gl_list e q_oil_list directly**
                     
                     fitting_service = FittingService(q_gl_list, q_oil_list)
                     fit = fitting_service.perform_fitting_group()
                     
                     optimization_service = OptimizationService(self.db)
-                    # **NOTA:** Asumimos que el primer elemento de list_info es el nombre de la planta/campo
                     plant_name = list_info[0] if list_info else "Unknown Plant"
                     optimization = optimization_service.get_latest()
 
                     st.subheader(f"Global optimization curve: {plant_name}")
-                    st.info("Calculando global optimization curve...")
+                    st.info("Calculating global optimization curve...")
 
                     pipeline = OptimizationGlobalPipelineService(
                                                          q_gl_range=fit["qgl_range"],
@@ -99,11 +97,10 @@ class OptimizationSettingsComponent:
             
                         
     '''
-    Método para mostrar la optimización restringida.
-    Ahora recibe los datos pre-procesados como una tupla: (QGL_lists, Qprod_lists, Metadata_list).
+    Method to show the constrained optimization.
+    Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
     '''
     def show_constrained_optimization(self, loaded_data):
-        # Desempaquetar los datos recibidos de OptimizationPage
         q_gl_list, q_oil_list, list_info = loaded_data
 
         if not q_gl_list:
@@ -160,14 +157,10 @@ class OptimizationSettingsComponent:
 
         if st.button("Execute Constrained Optimization"):
             with st.spinner("Processing data..."):
-                try:
-                    # **NOTA:** We use q_gl_list, q_oil_list e list_info**
-                    
+                try:                    
                     fitting_service = FittingService(q_gl_list, q_oil_list)
                     fit = fitting_service.perform_fitting_group()
 
-                    # **NOTA:** We assume that OptimizationConstrainedPipelineService does not need csv_file_path
-                    # and depends only on the data and metadata passed.
                     pipeline = OptimizationConstrainedPipelineService(
                                                          q_gl_range=fit['qgl_range'],
                                                          y_pred_list=fit["y_pred_list"],

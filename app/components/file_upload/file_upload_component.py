@@ -14,8 +14,8 @@ class FileUploadComponent:
         tmp_dir = self._get_tmp_dir()    
         option = self._choose_data_loading_method()
 
-        st.session_state.data_load_mode = None
-        st.session_state.temp_path = None
+        #st.session_state.data_load_mode = None
+        #st.session_state.temp_path = None
         
         if option == "Upload csv file":
             csv_input = CSVInputComponent(tmp_dir)
