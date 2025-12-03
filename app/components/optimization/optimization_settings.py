@@ -18,6 +18,13 @@ class OptimizationSettingsComponent:
         self.global_results = DisplayGlobalResults()
         self.chart_style = ChartStyle()
         self.db = db
+        self.qgl_min_global = 300
+        self.p_qoil_global = 70.0
+        self.p_qgl_global = 300.0
+        self.qgl_limit_constrained = 1000
+        self.qgl_min_constrained = 300
+        self.p_qoil_constrained = 70.0
+        self.p_qgl_constrained = 300.0
 
     '''
     Method to show the global optimization.
@@ -29,7 +36,7 @@ class OptimizationSettingsComponent:
             
             row1_col1, row1_col2 = st.columns(2)     
             with row1_col1:
-                p_qoil = st.number_input(
+                self.p_qoil_global = st.number_input(
                     "Oil price (USD/bbl)", 
                     min_value=0.1, 
                     max_value=None, 
@@ -39,7 +46,7 @@ class OptimizationSettingsComponent:
                 )
             
             with row1_col2:
-                p_qgl = st.number_input(
+                self.p_qgl_global = st.number_input(
                     "Gas cost (USD/Mscf)", 
                     min_value=0.1, 
                     max_value=None, 
@@ -51,7 +58,7 @@ class OptimizationSettingsComponent:
             row2_col1, row2_col2 = st.columns(2)
                         
             with row2_col1:
-                qgl_min = st.number_input(
+                self.qgl_min_global = st.number_input(
                     "Minimum QGL limit (Mscf)", 
                     min_value=0, 
                     max_value=None, 
@@ -85,9 +92,9 @@ class OptimizationSettingsComponent:
                     pipeline = OptimizationGlobalPipelineService(
                                                          q_gl_range=fit["qgl_range"],
                                                          y_pred_list=fit["y_pred_list"], 
-                                                         qgl_min=qgl_min,
-                                                         p_qoil=p_qoil,
-                                                         p_qgl=p_qgl,
+                                                         qgl_min=self.qgl_min_global,
+                                                         p_qoil=self.p_qoil_global,
+                                                         p_qgl=self.p_qgl_global,
                                                          max_iterations=40,
                                                          max_qgl=20000)   
                     optimization_results = pipeline.run()
@@ -103,7 +110,7 @@ class OptimizationSettingsComponent:
     Method to show the constrained optimization.
     Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
     '''
-    def show_constrained_settings(self, loaded_data):
+    def show_constrained_settings(self):
 
         with st.expander("Configuration of Optimization", expanded=True):
             
@@ -111,7 +118,7 @@ class OptimizationSettingsComponent:
             row1_col1, row1_col2 = st.columns(2)
 
             with row1_col1:
-                qgl_limit = st.number_input(
+                self.qgl_limit_constrained = st.number_input(
                     "Total QGL limit (Mscf)", 
                     min_value=0, 
                     max_value=None, 
@@ -121,7 +128,7 @@ class OptimizationSettingsComponent:
                 )
 
             with row1_col2:
-                qgl_min = st.number_input(
+                self.qgl_min_constrained = st.number_input(
                     "Minimum QGL limit (Mscf)", 
                     min_value=0, 
                     max_value=None, 
@@ -134,7 +141,7 @@ class OptimizationSettingsComponent:
             row2_col1, row2_col2 = st.columns(2)
 
             with row2_col1:
-                p_qoil = st.number_input(
+                self.p_qoil_constrained = st.number_input(
                     "Oil price (USD/bbl)", 
                     min_value=0.1, 
                     max_value=None, 
@@ -144,7 +151,7 @@ class OptimizationSettingsComponent:
                 )
             
             with row2_col2:
-                p_qgl = st.number_input(
+                self.p_qgl_constrained = st.number_input(
                     "Gas price (USD/Mscf)", 
                     min_value=0.1, 
                     max_value=None, 
@@ -153,7 +160,7 @@ class OptimizationSettingsComponent:
                     key="p_qgl"
                 )
 
-def run_constrained_optimization(self, loaded_data):
+    def run_constrained_optimization(self, loaded_data):
         q_gl_list, q_oil_list, list_info = loaded_data
 
         if not q_gl_list:
@@ -172,10 +179,10 @@ def run_constrained_optimization(self, loaded_data):
                                                          y_pred_list=fit["y_pred_list"],
                                                          plot_data=fit["plot_data"],
                                                          list_info=list_info,
-                                                         qgl_limit=qgl_limit,
-                                                         qgl_min=qgl_min,
-                                                         p_qoil=p_qoil,
-                                                         p_qgl=p_qgl,
+                                                         qgl_limit=self.qgl_limit_constrained,
+                                                         qgl_min=self.qgl_min_constrained,
+                                                         p_qoil=self.p_qoil_constrained,
+                                                         p_qgl=self.p_qgl_constrained,
                                                          db=self.db
                     )
                     optimization_results = pipeline.run()             

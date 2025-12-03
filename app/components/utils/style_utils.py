@@ -25,7 +25,7 @@ class ChartStyle:
                 x=optimization_results["total_qgl"],
                 y=optimization_results["total_production"],
                 mode='lines+markers',
-                name='Producción Total',
+                name='Total Production',
                 line=dict(width=3, color=self.line_color),
                 marker=dict(color=self.marker_color, size=7),
                 showlegend=True
@@ -42,12 +42,12 @@ class ChartStyle:
             annotation_text=f'{last_production:.2f} bbl',
             annotation_position="bottom left",
             annotation_font=dict(color=self.last_value_line_color),
-            name='Último valor'
+            name='Last Production'
         )
 
         fig.update_layout(
             xaxis=dict(
-                title_text="Límite de Inyección de Gas (qgl_limit)",
+                title_text="Total Gas Injection Limit (qgl_limit)",
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
                 tickfont=dict(color=self.text_color),
@@ -58,7 +58,7 @@ class ChartStyle:
                 minor_griddash="dot",
             ),
             yaxis=dict(
-                title_text="Producción Total de Petróleo (bbl)",
+                title_text="Total Oil Production (bbl)",
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
                 tickfont=dict(color=self.text_color),
@@ -92,7 +92,7 @@ class ChartStyle:
         fig_prod = make_subplots(
             rows=2, 
             cols=3, 
-            subplot_titles=[f"Well {well.well_name} - Producción" for well in well_result],
+            subplot_titles=[f"Well {well.well_name} - Oil Production" for well in well_result],
             horizontal_spacing=0.1,
             vertical_spacing=0.15
         )
@@ -106,7 +106,7 @@ class ChartStyle:
                     x=well_data["q_gl_range"],
                     y=well_data["q_oil_predicted"],
                     mode='lines',
-                    name='Curva ajustada',
+                    name='Adjusted Curve',
                     line=dict(width=3, color=self.line_color),
                     showlegend=True if idx == 0 else False,
                     legendgroup='group1'
@@ -119,7 +119,7 @@ class ChartStyle:
                     x=well_data["q_gl_actual"],
                     y=well_data["q_oil_actual"],
                     mode='markers',
-                    name='Datos reales',
+                    name='Real Data',
                     marker=dict(
                         color=self.marker_color, 
                         size=7, 
@@ -137,7 +137,7 @@ class ChartStyle:
                     x=[results["p_qgl_optim_list"][idx], results["p_qgl_optim_list"][idx]],
                     y=[0, results["p_qoil_optim_list"][idx]],
                     mode='lines',
-                    name='QGL máximo óptimo',
+                    name='Optimal QGL',
                     line=dict(color=self.marker_color, width=2, dash='dash'),
                     showlegend=True if idx == 0 else False,
                     legendgroup='group5'
@@ -153,7 +153,7 @@ class ChartStyle:
                     x=[optimal_qgl, optimal_qgl],
                     y=[0, optimal_prod],
                     mode='lines',
-                    name='QGL óptimo',
+                    name='Optimal QGL',
                     line=dict(color=self.optimal_line_color, width=2, dash='dash'),
                     showlegend=True if idx == 0 else False,
                     legendgroup='group'
@@ -166,7 +166,7 @@ class ChartStyle:
                     x=[optimal_qgl],
                     y=[optimal_prod],
                     mode='markers',
-                    name='Punto óptimo',
+                    name='Optimal Point',
                     marker=dict(
                         color=self.optimal_line_color, 
                         size=10, 
@@ -179,7 +179,7 @@ class ChartStyle:
             )
             
             fig_prod.update_xaxes(
-                title_text="Inyección de gas (q_gl)", 
+                title_text="Gas Injection (q_gl)", 
                 row=row, col=col,
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
@@ -188,7 +188,7 @@ class ChartStyle:
             )
             
             fig_prod.update_yaxes(
-                title_text="Producción (bbl/d)", 
+                title_text="Oil Production (bbl/d)", 
                 row=row, col=col,
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
