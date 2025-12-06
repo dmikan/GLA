@@ -10,34 +10,48 @@ class OptimizationPage:
     def __init__(self):
         self.db = SnowflakeDB()
         self.file_upload = FileUploadComponent()
+        self.optimization_settings = OptimizationSettingsComponent(self.db) 
         self.history = HistoryComponent() 
-
+        
     def show(self):
-        optimization_settings = OptimizationSettingsComponent(self.db)
         temp_path, load_mode = self.file_upload.show()
         is_data_ready = temp_path is not None and Path(temp_path).exists()
-        loader = DataLoader(temp_path)
 
+        if is_data_ready and load_mode:
+            try:
+                loader = DataLoader(temp_path)
+                if load_mode == "csv_upload":
+                    loaded_data = loader.load_data_ui()
+                elif load_mode == "manual_input":
+                    loaded_data = loader.load_data_ui()  
+                if not loaded_data[0]:
+                    st.error("Error: the data was loaded, but no valid wells/production was found.")
+                    is_data_ready = False
+                    self._show_tabs(is_data_ready, loaded_data) 
+
+            except Exception as e:
+                st.error(f"Error processing the file with DataLoader: {e}")
+                is_data_ready = False
+        else:
+            is_data_ready = False
         
+
+
+    def _show_tabs(self, is_data_ready, loaded_data):
         tab1, tab2, tab3 = st.tabs([
             "Global Optimization", 
-            "Constrained Optimization", 
+            "Optimization with QGL given", 
             "Optimization History"
         ])
-
         with tab1:
             if is_data_ready:
-                loaded_data = loader.load_data()
-                optimization_settings.show_global_settings()
-                optimization_settings.run_global_optimization(loaded_data)
+                self.optimization_settings.show_global_optimization(loaded_data)
             else:
                 st.warning("Please load data first to perform the optimization")
 
         with tab2:
             if is_data_ready:
-                loaded_data = loader.load_data()
-                optimization_settings.show_constrained_settings()
-                optimization_settings.run_constrained_optimization(loaded_data)
+                self.optimization_settings.show_constrained_optimization(loaded_data)
             else:
                 st.warning("Please load data first to perform the optimization")
 

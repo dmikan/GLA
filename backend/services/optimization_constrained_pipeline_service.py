@@ -9,7 +9,7 @@ class OptimizationConstrainedPipelineService:
     """Handles the optimization process using pre-calculated fitting results"""
     
     def __init__(self, 
-                 csv_file_path: str,
+                 #csv_file_path: str,
                  q_gl_range: np.ndarray,
                  y_pred_list: List[np.ndarray],
                  plot_data: List[Dict],
@@ -32,7 +32,7 @@ class OptimizationConstrainedPipelineService:
             p_qoil: Oil price
             p_qgl: Gas lift cost
         """
-        self.csv_file_path = csv_file_path
+        #self.csv_file_path = csv_file_path
         self.q_gl_range = q_gl_range
         self.y_pred_list = y_pred_list
         self.plot_data = plot_data
@@ -109,7 +109,7 @@ class OptimizationConstrainedPipelineService:
             "total_qgl": sum(result_optimal_qgl),
             "info": self.list_info,
             "wells_data": wells_data,
-            "filename": self.csv_file_path,
+            #"filename": self.csv_file_path,
             "qgl_limit": self.qgl_limit,
             "oil_price": self.p_qoil,
             "gas_price": self.p_qgl

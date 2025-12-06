@@ -8,23 +8,23 @@ from app.pages.other_services_page import OtherServicesPage
 from app.pages.historical_data_page import HistoricalPage
 
 def main():
-    # Configuración inicial
-    st.set_page_config(page_title="Optimizador de Pozos", layout="wide")
-    st.title("🛢️ Optimización de Distribución de Gas")
+    # Configuration
+    st.set_page_config(page_title="Gas Lift Allocation Optimizer", layout="wide")
+    st.title("🛢️ Gas Lift Allocation Optimizer")
 
-    # --- Pestañas ---
+    # --- Tabs ---
     tabs = st.sidebar.radio(
-        "Selecciona una opción", 
-        ["Optimización", "Datos Históricos" ,"Otros servicios"]
+        "Select an option", 
+        ["Optimization", "Historical Data" ,"Other services"]
     )
 
-    if tabs == "Optimización":
+    if tabs == "Optimization":
         page = OptimizationPage()
         page.show()
-    elif tabs == "Datos Históricos":
+    elif tabs == "Historical Data":
         page = HistoricalPage()
         page.show()   
-    elif tabs == "Otros servicios":
+    elif tabs == "Other services":
         page = OtherServicesPage()
         page.show()
 

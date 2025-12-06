@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from app.components.utils.style_utils import ChartStyle
 
-class OptimizationGlobalResults:
+class DisplayGlobalResults:
     def __init__(self):
         self.chart_style = ChartStyle()
 

@@ -3,12 +3,12 @@ from app.components.historical_data.historical_data_component import HistoricalD
 
 class HistoricalPage:
     def show(self):
-        st.subheader("Datos Históricos")
+        st.subheader("Historical Data")
         
         components = HistoricalDataComponents()
         
-        # Mostrar gráficos en pestañas
-        tab1, tab2 = st.tabs(["Relación Gas-Líquido", "Importancia de Variables"])
+        # Show graphs in tabs
+        tab1, tab2 = st.tabs(["Gas-Liquid Ratio", "Variable Importance"])
         
         with tab1:
             components.render_scatter_plot()

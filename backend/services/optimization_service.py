@@ -10,27 +10,27 @@ class OptimizationService:
     
     def create_optimization(self, data: dict) -> int:
         try:
-            # Paso 1: obtener el siguiente valor de la secuencia
+            # step 1: get the next value of the sequence
             id_query = "SELECT optimizations_id_seq.NEXTVAL"
-            rows = self.db.execute(id_query)
+            rows = self.db.execute_query(id_query)
             new_id = rows[0]['NEXTVAL']
 
-            # Paso 2: extraer datos desde el diccionario
+            # step 2: extract data from the dictionary
             total_prod = data["total_prod"]
             total_qgl = data["total_qgl"]
             qgl_limit = data.get("qgl_limit", 1000)
             oil_price = data.get("oil_price", 0.0)
             gas_price = data.get("gas_price", 0.0)
             field_name = data["info"][0]
-            filename = data["filename"]
+            #filename = data["filename"]
 
-            # Paso 3: hacer el insert con los valores extraídos
+            # step 3: make the insert with the extracted values
             query = """
                 INSERT INTO optimizations (
                     id, execution_date, total_production, total_gas_injection, gas_injection_limit,
-                    oil_price, gas_price, plant_name, source_file
+                    oil_price, gas_price, plant_name
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
             params = (
                 new_id,
@@ -41,12 +41,12 @@ class OptimizationService:
                 float(oil_price),
                 float(gas_price),
                 str(field_name),
-                str(filename),
+                #str(filename),
             )
-            self.db.execute(query, params)
+            self.db.execute_query(query, params)
             return new_id
         except Exception as e:
-            raise ValueError(f"Error al crear optimización: {str(e)}")
+            raise ValueError(f"Error creating optimization: {str(e)}")
 
     
     def get_latest(self) -> Optional[Optimization]:
@@ -56,21 +56,21 @@ class OptimizationService:
         ORDER BY execution_date DESC 
         LIMIT 1
         """
-        result = self.db.execute(query)
+        result = self.db.execute_query(query)
         return Optimization.from_dict(result[0]) if result else None
     
 
 
 
     def get_all_optimizations(self, limit: int = None) -> List[Optimization]:
-        """Obtiene todas las optimizaciones ordenadas por fecha descendente"""
+        """Get all optimizations ordered by date descending"""
         query = """
         SELECT * FROM optimizations 
         ORDER BY execution_date DESC
         """
         if limit is not None:
             query += f" LIMIT {limit}"
-        results = self.db.execute(query)
+        results = self.db.execute_query(query)
         #df = pd.read_sql(query, self.db.get_connection())
         return [Optimization.from_dict(row) for row in results]
 

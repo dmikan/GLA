@@ -17,9 +17,6 @@ class WellResultService:
         """
 
         try:
-            conn = self.db.get_connection()
-            cursor = conn.cursor()
-
             for well in data["wells_data"]:
 
                 params = (
@@ -29,18 +26,14 @@ class WellResultService:
                     float(well["optimal_production"]),
                     float(well["optimal_gas_injection"])
                 )
-                cursor.execute(query, params)
-
-            conn.commit()
+                self.db.execute_query(query, params)
+                
             return True
         except Exception as e:
-            conn.rollback()
-            raise e
-        finally:
-            conn.close()
+            raise ValueError(f"Error creating well results: {str(e)}")
 
     def get_latest_well_results(self, limit: int = None) -> List[WellResult]:
-        """Obtiene todos los resultados de pozos ordenados por número de pozo"""
+        """Get all well results ordered by well number"""
         query = """
                 SELECT w.*, o.execution_date 
                 FROM well_results w
@@ -55,13 +48,13 @@ class WellResultService:
         if limit is not None:
             query += f" LIMIT {limit}"
         
-        results = self.db.execute(query) 
+        results = self.db.execute_query(query) 
         return [WellResult.from_dict(row) for row in results]
     
     def get_by_optimization(self, optimization_id: int) -> list[WellResult]:
         """Get all well results for an optimization"""
         query = "SELECT * FROM well_results WHERE optimization_id = %s"
-        results = self.db.execute(query, (optimization_id,))
+        results = self.db.execute_query(query, (optimization_id,))
         return [WellResult.from_dict(row) for row in results]
     
 

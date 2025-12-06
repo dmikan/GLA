@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 from backend.services.optimization_service import OptimizationService
 from backend.models.database import SnowflakeDB
-from app.components.optimization.optimization_constrained_results import OptimizationConstrainedResults
+from app.components.optimization.display_constrained_results import DisplayConstrainedResults
 
 class HistoryComponent:
     def __init__(self):
-        self.results_component = OptimizationConstrainedResults()
+        self.results_component = DisplayConstrainedResults()
 
     def show(self):
         st.subheader("Historial of optimizations")

@@ -2,6 +2,31 @@ import streamlit as st
 import pandas as pd
 
 class ManualInputComponent:
+    def __init__(self, tmp_dir):
+        self.tmp_dir = tmp_dir
+
+    def load(self):
+        manual_data = self._handle_manual_input()
+        if manual_data is not None and manual_data[1]:
+            st.session_state.data_load_mode = "manual_input"
+            st.session_state.temp_path = manual_data[1]   
+
+    def _handle_manual_input(self):
+        manual_data_df = self._show()
+        if manual_data_df is not None and not manual_data_df.empty:
+            df = manual_data_df
+            field_name = df.iloc[2, 0] if len(df) > 2 and not pd.isna(df.iloc[2, 0]) else "manual_data"
+            temp_path = self.tmp_dir / f"data_{field_name.lower().replace(' ', '_')}.csv"
+            
+            #if st.button("Guardar datos manuales"):
+            try:
+                df.to_csv(temp_path, index=False, header=False) 
+                st.success(f"Data saved successfully.")
+                st.session_state.uploaded_file = df
+                return df, temp_path
+            except Exception as e:
+                st.error(f"Error saving data: {e}")
+        return None, None 
 
     def _create_input_dataframe(self, num_wells, num_filas, input_columns_info, production_columns):
         input_df_info = pd.DataFrame(
@@ -43,45 +68,60 @@ class ManualInputComponent:
         
         return final_df
 
-    def show(self):
-        st.subheader("Configuración")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            num_wells = st.number_input("Número de pozos", min_value=1, max_value=20, value=5, step=1)
-        
-        with col2:
-            num_filas = st.number_input("Número de filas de datos", min_value=1, max_value=100, value=5, step=1)
+    def _show(self):
+        with st.expander("⚙️ Configuration Settings", expanded=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                num_wells = st.number_input("Number of wells", min_value=1, max_value=100, value=5, step=1)
+            
+            with col2:
+                num_filas = st.number_input("Number of data rows", min_value=1, max_value=100, value=5, step=1)
 
-        # Información de campos
-        st.subheader("Información de Campos y Pozos")
+
+
+        st.divider() 
+        st.subheader("📋 Information of Fields and Wells")
+        st.caption("Please define the field name and assign identifiers for each well below.")
+        
         well_columns = [f"well_{i+1}" for i in range(num_wells)]
         input_columns_info = ["field"] + well_columns
         
         input_df_info, input_df = self._create_input_dataframe(
             num_wells, num_filas, input_columns_info,
-            [f"q_inj_w{i}" for i in range(1, num_wells + 1)] +
-            [f"fluid_w{i}" for i in range(1, num_wells + 1)]
+            [item for i in range(1, num_wells + 1) for item in (f"q_inj_w{i}", f"fluid_w{i}")]
         )
+
+        info_config = {"field": st.column_config.TextColumn("📍 Field")}
+        info_config.update({col: st.column_config.TextColumn(f"🛢️ {col.replace('_', ' ').title()}") for col in well_columns})
 
         edited_input_df_info = st.data_editor(
             input_df_info,
+            column_config=info_config, 
             num_rows="fixed",
-            hide_index=False,
+            hide_index=True, 
             use_container_width=True,
             key="info_editor"
         )
 
-        # Datos de producción
-        st.subheader("Datos de Producción")
+
+        st.divider() 
+        st.subheader("📊 Production Data Input")
+        st.caption("Enter the daily injection rates and fluid types for the simulation.")
+
+        prod_config = {}
+        for i in range(1, num_wells + 1): 
+            prod_config[f"q_inj_w{i}"] = st.column_config.TextColumn(f"QGL W{i}")
+            prod_config[f"fluid_w{i}"] = st.column_config.TextColumn(f"QL W{i}")
+
         edited_input_df = st.data_editor(
             input_df,
+            column_config=prod_config,  
             num_rows="fixed",
             hide_index=False,
             use_container_width=True,
             key="prod_editor"
         )
-
+        
         if "index" not in edited_input_df.columns:
             edited_input_df.insert(0, "index", range(1, len(edited_input_df) + 1))
 

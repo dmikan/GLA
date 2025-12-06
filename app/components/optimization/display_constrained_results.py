@@ -2,28 +2,27 @@ import streamlit as st
 import pandas as pd
 from app.components.utils.style_utils import ChartStyle
 
-class OptimizationConstrainedResults:
+class DisplayConstrainedResults:
     def __init__(self):
         self.chart_style = ChartStyle()
 
 
     '''
-    Método para mostrar los resultados de la optimización.
-    Este método se encarga de mostrar los resultados de la optimización, incluyendo métricas resumen y gráficos de curvas de pozo.
-    Se encarga de mostrar los resultados detallados por pozo y las métricas resumen.
+    Method to display the optimization results.
+    This method is responsible for displaying the optimization results, including summary metrics and well curves.
     '''
     def show(self, results, well_result):
         self._show_summary_metrics(results['summary'])
         st.markdown("---")
         self._plot_well_curves(results, well_result)
-        st.subheader("Resultados Detallados por Pozo")
+        st.subheader("Detailed Results by Well")
         self._show_well_results(well_result)
 
    
     '''
-    Método para mostrar las métricas resumen de la optimización.
-    Este método se encarga de mostrar las métricas resumen de la optimización, incluyendo la producción total, el QGL total utilizado y el límite de QGL configurado.
-    Se encarga de mostrar las métricas en columnas para una mejor visualización.
+    Method to display the summary metrics of the optimization.
+    This method is responsible for displaying the summary metrics of the optimization, including total production, total QGL used, and the configured QGL limit.
+    It displays the metrics in columns for better visualization.
     '''
 
     def _show_summary_metrics(self, summary):
@@ -31,27 +30,27 @@ class OptimizationConstrainedResults:
         
         with col1:
             st.metric(
-                "Producción Total", 
+                "Total Production", 
                 f"{summary['total_production']:.2f} bbl"
             )
         
         with col2:
             st.metric(
-                "QGL Total Utilizado", 
+                "Total QGL Used", 
                 f"{summary['total_qgl']:.2f} Mscf",
-                delta=f"{(summary['total_qgl']/summary['qgl_limit']*100):.1f}% del límite"
+                delta=f"{(summary['total_qgl']/summary['qgl_limit']*100):.1f}% of the limit"
             )
         
         with col3:
             st.metric(
-                "Límite QGL Configurado", 
+                "Configured QGL Limit", 
                 f"{summary['qgl_limit']:.2f} Mscf"
             )
 
 
     def _plot_well_curves(self, results, well_result):
         if not results.get('plot_data') or not well_result:
-            st.warning("No hay datos suficientes para graficar")
+            st.warning("No data available to plot")
             return
         
         fig_prod = self.chart_style.create_well_curves_chart(results, well_result)
@@ -61,26 +60,26 @@ class OptimizationConstrainedResults:
 
     def _show_well_results(self, well_result):
         if not well_result:
-            st.warning("No hay datos de pozos para mostrar")
+            st.warning("No well data available to display")
             return
         
         try:
             well_data = [{
-                "Pozo": getattr(result, 'well_name', 'N/A'),
-                "Producción": getattr(result, 'optimal_production', 0),
+                "Well": getattr(result, 'well_name', 'N/A'),
+                "Production": getattr(result, 'optimal_production', 0),
                 "QGL": getattr(result, 'optimal_gas_injection', 0)
             } for result in well_result]
             
             df = pd.DataFrame(well_data)
             
-            if "Pozo" not in df.columns:
-                df = df.rename(columns={"well_name": "Pozo"})
+            if "Well" not in df.columns:
+                df = df.rename(columns={"well_name": "Well"})
             
-            st.dataframe(df.set_index("Pozo").style.format({
-                "Producción": "{:.2f}",
+            st.dataframe(df.set_index("Well").style.format({
+                "Production": "{:.2f}",
                 "QGL": "{:.2f}"
             }))
             
         except Exception as e:
-            st.error(f"Error al mostrar resultados: {str(e)}")
-            st.write("Datos recibidos:", well_result)
+            st.error(f"Error displaying results: {str(e)}")
+            st.write("Data received:", well_result)

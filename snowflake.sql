@@ -15,8 +15,7 @@ CREATE TABLE IF NOT EXISTS optimizations (
     gas_injection_limit FLOAT,
     oil_price FLOAT,
     gas_price FLOAT,
-    plant_name VARCHAR(100),
-    source_file VARCHAR(255)
+    plant_name VARCHAR(100)
 );
 
 CREATE SEQUENCE IF NOT EXISTS well_results_id_seq START WITH 1 INCREMENT BY 1;

@@ -2,4 +2,4 @@ import streamlit as st
 
 class OtherServicesPage:
     def show(self):
-        st.subheader("Otros servicios")
+        st.subheader("Other services")
