@@ -29,7 +29,7 @@ class OptimizationPage:
             if is_data_ready:
                 loaded_data = loader.load_data()
                 optimization_settings.show_global_settings()
-                optimization_settings.run_optimization(loaded_data)
+                optimization_settings.run_global_optimization(loaded_data)
             else:
                 st.warning("Please load data first to perform the optimization")
 

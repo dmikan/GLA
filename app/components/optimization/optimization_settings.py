@@ -67,7 +67,7 @@ class OptimizationSettingsComponent:
                     key="qgl_min_global"
                 )              
         
-    def run_optimization(self, loaded_data):
+    def run_global_optimization(self, loaded_data):
 
         q_gl_list, q_oil_list, list_info = loaded_data
 
