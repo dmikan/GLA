@@ -7,18 +7,19 @@ from app.components.file_upload.manual_input_component import ManualInputCompone
 from app.components.file_upload.csv_input_component import CSVInputComponent
 from app.components.file_upload.proper_input_component import ProperInputComponent
 
-class FileUploadComponent:   
+class FileUploadComponent:
 
     def show(self):
-        self._init_session_state()  
-        tmp_dir = self._get_tmp_dir()    
+        self._init_session_state()
+        tmp_dir = self._get_tmp_dir()
         option = self._choose_data_loading_method()
 
         #st.session_state.data_load_mode = None
         #st.session_state.temp_path = None
-        
+
         if option == "Upload csv file":
             csv_input = CSVInputComponent(tmp_dir)
+            csv_input.show_csv_loader_widget()
             csv_input.load()
         elif option == "Manual input":
             manual_input = ManualInputComponent(tmp_dir)
@@ -46,7 +47,7 @@ class FileUploadComponent:
             project_root = Path(__file__).parent.parent.parent.parent
             local_path = project_root / "tmp"
             local_path.mkdir(parents=True, exist_ok=True)
-            return local_path    
+            return local_path
 
     def _choose_data_loading_method(self):
         option = st.radio(
@@ -57,5 +58,7 @@ class FileUploadComponent:
         return option
 
 
+if  __name__== "__main__":
 
-
+    var1 = Path(__file__).parent.parent.parent.parent
+    print(var1)
