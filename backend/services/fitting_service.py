@@ -64,7 +64,7 @@ class FittingService:
                 q_fluid,
                 p0=p0,
                 bounds=bounds,
-                maxfev=10000
+                maxfev=500000
             )
 
             print("✅ Parameters adjusted:", [f"{param:.2f}" for param in params_list])
