@@ -1,29 +1,31 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import streamlit as st
 
-class ChartStyle:
-    def __init__(self):
+class Plotter:
+    def __init__(self, optimization_results: dict):
         self.bg_color = "#0E1117"
         self.grid_color = "#37474F"
         self.text_color = "#FFFFFF"
-        self.line_color = "#00E676"
+        self.line_color = "#00E676"  
         self.marker_color = "#C8E6C9"
         self.optimal_line_color = "#FF5252"
         self.last_value_line_color = "#FF1744"
+        self.optimization_results = optimization_results
 
     '''
-    Método para crear un gráfico de optimización global.
-    Este método se encarga de crear un gráfico de optimización global utilizando Plotly.
-    Se encarga de crear un gráfico de líneas con marcadores para la producción total y una línea horizontal para el último valor de producción.
+    Method to create a global optimization chart.
+    This method is responsible for creating a global optimization chart using Plotly.
+    It creates a line chart with markers for total production and a horizontal line for the last production value.
     '''    
-    def create_global_optimization_chart(self, optimization_results):
-        last_production = optimization_results["total_production"][-1] if optimization_results["total_production"] else 0
+    def create_global_curve(self):
+        last_production = self.optimization_results["total_production"][-1] if self.optimization_results["total_production"] else 0
 
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
-                x=optimization_results["total_qgl"],
-                y=optimization_results["total_production"],
+                x=self.optimization_results["total_qgl"],
+                y=self.optimization_results["total_production"],
                 mode='lines+markers',
                 name='Total Production',
                 line=dict(width=3, color=self.line_color),
@@ -84,40 +86,55 @@ class ChartStyle:
     
     
     '''
-    Método para crear un gráfico de curvas de pozos.
-    Este método se encarga de crear un gráfico de curvas de pozos utilizando Plotly.
-    Se encarga de crear un gráfico de líneas con marcadores para la producción y la inyección de gas, así como líneas óptimas y puntos óptimos.
+    Method to create a well curves chart.
+    This method is responsible for creating a well curves chart using Plotly.
+    It creates a line chart with markers for production and gas injection, as well as optimal lines and optimal points.
     '''
-    def create_well_curves_chart(self, results, well_result):
+    def create_well_curves(self, well_results):
         fig_prod = make_subplots(
             rows=2, 
             cols=3, 
-            subplot_titles=[f"Well {well.well_name} - Oil Production" for well in well_result],
-            horizontal_spacing=0.1,
-            vertical_spacing=0.15
+            subplot_titles=[f"Well {well.well_name}" for well in well_results],
+            horizontal_spacing=0.12,
+            vertical_spacing=0.25
         )
+        
 
-        for idx, (well_data, pozo) in enumerate(zip(results['plot_data'], well_result)):
+        for idx, (well_data, well_result) in enumerate(zip(self.optimization_results['plot_data'], well_results)):
             row = (idx // 3) + 1
             col = (idx % 3) + 1
             
             fig_prod.add_trace(
                 go.Scatter(
-                    x=well_data["q_gl_range"],
-                    y=well_data["q_oil_predicted"],
+                    x=well_data["q_gl_common_range"],
+                    y=well_data["q_fluid_predicted"],
                     mode='lines',
-                    name='Adjusted Curve',
+                    name='Adjusted Fluid Curve',
                     line=dict(width=3, color=self.line_color),
                     showlegend=True if idx == 0 else False,
                     legendgroup='group1'
                 ),
                 row=row, col=col
             )
+
+            fig_prod.add_trace(
+                go.Scatter(
+                    x=well_data["q_gl_common_range"],
+                    y=well_data["q_oil_predicted"],
+                    mode='lines',
+                    name='Adjusted Oil Curve',
+                    line=dict(width=3, color=self.optimal_line_color),
+                    showlegend=True if idx == 0 else False,
+                    legendgroup='group2'
+                ),
+                row=row, col=col
+            )
+            
             
             fig_prod.add_trace(
                 go.Scatter(
-                    x=well_data["q_gl_actual"],
-                    y=well_data["q_oil_actual"],
+                    x=well_data["q_gl_original"],
+                    y=well_data["q_fluid_original"],
                     mode='markers',
                     name='Real Data',
                     marker=dict(
@@ -126,7 +143,7 @@ class ChartStyle:
                         line=dict(width=1, color='DarkSlateGrey')
                     ),
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group2'
+                    legendgroup='group3'
                 ),
                 row=row, col=col
             )
@@ -134,19 +151,19 @@ class ChartStyle:
             # 3. Óptimo según MRP 
             fig_prod.add_trace(
                 go.Scatter(
-                    x=[results["p_qgl_optim_list"][idx], results["p_qgl_optim_list"][idx]],
-                    y=[0, results["p_qoil_optim_list"][idx]],
+                    x=[self.optimization_results["p_qgl_optim_list"][idx], self.optimization_results["p_qgl_optim_list"][idx]],
+                    y=[0, self.optimization_results["p_qoil_optim_list"][idx]],
                     mode='lines',
                     name='Optimal QGL',
                     line=dict(color=self.marker_color, width=2, dash='dash'),
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group5'
+                    legendgroup='group4'
                 ),
                 row=row, col=col
             )
             
-            optimal_qgl = pozo.optimal_gas_injection
-            optimal_prod = pozo.optimal_production
+            optimal_qgl = well_result.optimal_gas_injection
+            optimal_prod = well_result.optimal_production
             
             fig_prod.add_trace(
                 go.Scatter(
@@ -156,7 +173,7 @@ class ChartStyle:
                     name='Optimal QGL',
                     line=dict(color=self.optimal_line_color, width=2, dash='dash'),
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group'
+                    legendgroup='group5'
                 ),
                 row=row, col=col
             )
@@ -173,7 +190,7 @@ class ChartStyle:
                         symbol='x'
                     ),
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group4'
+                    legendgroup='group6'
                 ),
                 row=row, col=col
             )
@@ -184,7 +201,9 @@ class ChartStyle:
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
                 tickfont=dict(color=self.text_color),
-                title_font=dict(color=self.text_color)
+                title_font=dict(color=self.text_color),
+                showline=True, 
+                mirror=True
             )
             
             fig_prod.update_yaxes(
@@ -193,9 +212,11 @@ class ChartStyle:
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
                 tickfont=dict(color=self.text_color),
-                title_font=dict(color=self.text_color)
+                title_font=dict(color=self.text_color),
+                showline=True, 
+                mirror=True
             )
-
+        
         fig_prod.update_layout(
             height=800,
             width=1200,
@@ -205,7 +226,7 @@ class ChartStyle:
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
-                y=1.02,
+                y=1.2,
                 xanchor="right",
                 x=1,
                 font=dict(color=self.text_color)
@@ -214,8 +235,10 @@ class ChartStyle:
                 l=50,
                 r=50,
                 b=80,
-                t=100,
+                t=140,
                 pad=4
             )
         )
         return fig_prod
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)

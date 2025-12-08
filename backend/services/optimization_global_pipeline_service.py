@@ -5,8 +5,8 @@ class OptimizationGlobalPipelineService:
     """Handles the complete optimization workflow from data processing to solution"""
     
     def __init__(self, 
-                q_gl_range: np.ndarray,
-                y_pred_list: list,
+                q_gl_common_range: np.ndarray,
+                q_oil_rates_list: list,
                 qgl_min: int = 0,
                 p_qoil: float = 0.0,
                 p_qgl: float = 0.0,
@@ -16,14 +16,15 @@ class OptimizationGlobalPipelineService:
         Initialize the optimization pipeline with required parameters
         
         Args:
-            q_gl_range: Array of gas lift injection rates
-            y_pred_list: List of well production predictions
+            q_gl_common_range: Array of gas lift injection rates
+            q_oil_rates_list: List of well production predictions
             qgl_limit: Total gas lift availability constraint
             p_qoil: Oil price for economic calculation
             p_qgl: Gas lift cost for economic calculation
         """
-        self.q_gl_range = q_gl_range
-        self.y_pred_list = y_pred_list
+        self.q_gl_common_range = q_gl_common_range
+        self.q_oil_rates_list = q_oil_rates_list
+        self.qgl_min = qgl_min
         self.p_qoil = p_qoil
         self.p_qgl = p_qgl
         self.model = None
@@ -43,7 +44,7 @@ class OptimizationGlobalPipelineService:
     it runs the optimization pipeline for each gas lift injection rate
     it returns the optimization results
     '''
-    def run(self):
+    def run(self) -> dict:
         log_vals = np.logspace(start=1, stop=np.log10(self.max_qgl), num=self.max_iterations)
         log_vals = np.unique(log_vals)
         for i, qgl_limit in enumerate(log_vals): 
@@ -58,7 +59,7 @@ class OptimizationGlobalPipelineService:
     it uses a window size to check if the gas lift injection rate has stabilized
     it returns True if the gas lift injection rate has stabilized
     '''               
-    def _has_stabilized(self, values, window_size=3, tolerance=1e-6):
+    def _has_stabilized(self, values, window_size=3, tolerance=1e-6) -> bool:
             if len(values) < window_size:
                 return False
             recent = values[-window_size:]
@@ -69,14 +70,14 @@ class OptimizationGlobalPipelineService:
     it returns the optimal gas lift rates for each well 
     '''
     def _calculate_marginal_analysis(self) -> list:
-        delta_q_gl = np.diff(self.q_gl_range)
+        delta_q_gl = np.diff(self.q_gl_common_range)
         p_qgl_optim_list = []
         
-        for well in range(len(self.y_pred_list)):
-            delta_q_oil = np.diff(self.y_pred_list[well])
+        for well in range(len(self.q_oil_rates_list)):
+            delta_q_oil = np.diff(self.q_oil_rates_list[well])
             mp = delta_q_oil / delta_q_gl  # Marginal Product
             mrp = self.p_qoil * mp  # Marginal Revenue Product
-            qgl_values = self.q_gl_range[:-1]
+            qgl_values = self.q_gl_common_range[:-1]
             
             # Find last point where MRP >= gas lift cost
             optimal_idx = np.where(mrp >= self.p_qgl)[0][-1] if any(mrp >= self.p_qgl) else len(mrp)-1
@@ -89,8 +90,8 @@ class OptimizationGlobalPipelineService:
     '''
     def _setup_optimization_model(self, p_qgl_optim_list: list, qgl_limit: int) -> None:
         self.model = OptimizationModel(
-            q_gl=self.q_gl_range,
-            q_fluid_wells=self.y_pred_list,
+            q_gl=self.q_gl_common_range,
+            q_fluid_wells=self.q_oil_rates_list,
             available_qgl_total=qgl_limit,
             qgl_min=self.qgl_min,
             p_qgl_list=p_qgl_optim_list
@@ -131,7 +132,7 @@ class OptimizationGlobalPipelineService:
     this method stores the optimization results in a list
     it returns the list of optimization results
     '''
-    def _list_optim(self, dic_optim_result, qgl_limit):
+    def _list_optim(self, dic_optim_result, qgl_limit) -> list:
         """Run the complete optimization pipeline"""
         current_qgl = dic_optim_result["total_qgl"]
         self.optimization_results["qgl_limit"].append(qgl_limit)

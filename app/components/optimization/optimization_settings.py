@@ -9,14 +9,11 @@ from backend.services.well_result_service import WellResultService
 from backend.models.database import SnowflakeDB
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
 from app.components.optimization.display_global_results import DisplayGlobalResults
-from app.components.utils.style_utils import ChartStyle
+from app.components.utils.plotter import Plotter
 
 
 class OptimizationSettingsComponent:
     def __init__(self, db: SnowflakeDB):
-        self.display_constrained_results = DisplayConstrainedResults()
-        self.global_results = DisplayGlobalResults()
-        self.chart_style = ChartStyle()
         self.db = db
         self.qgl_min_global = 300
         self.p_qoil_global = 70.0
@@ -69,7 +66,7 @@ class OptimizationSettingsComponent:
 
     def run_global_optimization(self, loaded_data):
 
-        q_gl_list, q_fluid_list, list_info = loaded_data
+        q_gl_list, q_fluid_list, wct_list, list_info = loaded_data
 
         if not q_gl_list:
              st.warning("No valid data loaded to execute global optimization.")
@@ -79,7 +76,7 @@ class OptimizationSettingsComponent:
             with st.spinner("Processing data..."):
                 try:
 
-                    fitting_service = FittingService(q_gl_list, q_fluid_list)
+                    fitting_service = FittingService(q_gl_list, q_fluid_list, wct_list)
                     fit = fitting_service.perform_fitting_group()
 
                     optimization_service = OptimizationService(self.db)
@@ -90,8 +87,8 @@ class OptimizationSettingsComponent:
                     st.info("Calculating global optimization curve...")
 
                     pipeline = OptimizationGlobalPipelineService(
-                                                         q_gl_range=fit["qgl_range"],
-                                                         y_pred_list=fit["y_pred_list"],
+                                                         q_gl_common_range=fit["q_gl_common_range"],
+                                                         q_oil_rates_list=fit["q_oil_rates_list"],
                                                          qgl_min=self.qgl_min_global,
                                                          p_qoil=self.p_qoil_global,
                                                          p_qgl=self.p_qgl_global,
@@ -100,7 +97,8 @@ class OptimizationSettingsComponent:
                     optimization_results = pipeline.run()
                     st.info("Total QGL has stabilized. Finalizing global optimization.")
 
-                    self.global_results.show(optimization_results)
+                    display_global_results = DisplayGlobalResults(optimization_results)
+                    display_global_results.show()
                 except Exception as e:
                     st.error(f"❌ Error during global optimization: {str(e)}")
                     st.exception(e)
@@ -130,10 +128,10 @@ class OptimizationSettingsComponent:
             with row1_col2:
                 self.qgl_min_constrained = st.number_input(
                     "Minimum QGL limit (Mscf)",
-                    min_value=0,
+                    min_value=0.1,
                     max_value=None,
-                    value=300,
-                    step=100,
+                    value=1.0,
+                    step=1.0,
                     key="qgl_min"
                 )
 
@@ -145,7 +143,7 @@ class OptimizationSettingsComponent:
                     "Oil price (USD/bbl)",
                     min_value=0.1,
                     max_value=None,
-                    value=70.0,
+                    value=100.0,
                     step=1.0,
                     key="p_qoil"
                 )
@@ -155,8 +153,8 @@ class OptimizationSettingsComponent:
                     "Gas price (USD/Mscf)",
                     min_value=0.1,
                     max_value=None,
-                    value=5.0,
-                    step=0.5,
+                    value=1.0,
+                    step=1.0,
                     key="p_qgl"
                 )
 
@@ -175,8 +173,8 @@ class OptimizationSettingsComponent:
                     fit = fitting_service.perform_fitting_group()
 
                     pipeline = OptimizationConstrainedPipelineService(
-                                                         q_gl_range=fit['qgl_range'],
-                                                         q_oil_list=fit["oil_rates"],
+                                                         q_gl_common_range=fit['q_gl_common_range'],
+                                                         q_oil_rates_list=fit["oil_rates_list"],
                                                          plot_data=fit["plot_data"],
                                                          list_info=list_info,
                                                          qgl_limit=self.qgl_limit_constrained,
@@ -190,9 +188,10 @@ class OptimizationSettingsComponent:
 
 
                     well_result_service = WellResultService(self.db)
-                    well_result = well_result_service.get_latest_well_results()
+                    well_results = well_result_service.get_latest_well_results()
 
-                    self.display_constrained_results.show(optimization_results, well_result)
+                    display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
+                    display_constrained_results.show()
                 except Exception as e:
                     st.error(f"❌ Error during constrained optimization: {str(e)}")
                     st.exception(e)

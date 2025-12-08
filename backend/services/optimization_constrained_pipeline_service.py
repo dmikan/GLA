@@ -9,9 +9,8 @@ class OptimizationConstrainedPipelineService:
     """Handles the optimization process using pre-calculated fitting results"""
 
     def __init__(self,
-                 #csv_file_path: str,
-                 q_gl_range: np.ndarray,
-                 q_oil_list: List[np.ndarray],
+                 q_gl_common_range: np.ndarray,
+                 q_oil_rates_list: List[np.ndarray],
                  plot_data: List[Dict],
                  list_info: List[str],
                  qgl_limit: float = 4600,
@@ -33,8 +32,8 @@ class OptimizationConstrainedPipelineService:
             p_qgl: Gas lift cost
         """
         #self.csv_file_path = csv_file_path
-        self.q_gl_range = q_gl_range
-        self.q_oil_list = q_oil_list
+        self.q_gl_common_range = q_gl_common_range
+        self.q_oil_rates_list = q_oil_rates_list
         self.plot_data = plot_data
         self.list_info = list_info
         self.qgl_limit = qgl_limit
@@ -47,26 +46,26 @@ class OptimizationConstrainedPipelineService:
 
     def _calculate_marginal_analysis(self) -> Tuple[List[float], List[float]]:
         """Calculate optimal gas lift rates using marginal analysis"""
-        delta_q_gl = np.diff(self.q_gl_range)
+        delta_q_gl = np.diff(self.q_gl_common_range)
         p_qgl_optim_list = []
         p_qoil_optim_list = []
 
-        for well in range(len(self.q_oil_list)):
-            delta_q_oil = np.diff(self.q_oil_list[well])
+        for well in range(len(self.q_oil_rates_list)):
+            delta_q_oil = np.diff(self.q_oil_rates_list[well])
             mrp = self.p_qoil * (delta_q_oil / delta_q_gl)
-            qgl_values = self.q_gl_range[:-1]
+            qgl_values = self.q_gl_common_range[:-1]
 
             optimal_idx = np.where(mrp >= self.p_qgl)[0][-1] if any(mrp >= self.p_qgl) else len(mrp)-1
             p_qgl_optim_list.append(qgl_values[optimal_idx])
-            p_qoil_optim_list.append(self.q_oil_list[well][optimal_idx])
+            p_qoil_optim_list.append(self.q_oil_rates_list[well][optimal_idx])
 
         return p_qgl_optim_list, p_qoil_optim_list
 
     def _setup_optimization_model(self, p_qgl_optim_list: List[float]):
         """Configure and solve the optimization model"""
         self.model = OptimizationModel(
-            q_gl=self.q_gl_range,
-            q_fluid_wells=self.q_oil_list,
+            q_gl=self.q_gl_common_range,
+            q_fluid_wells=self.q_oil_rates_list,
             available_qgl_total=self.qgl_limit,
             qgl_min=self.qgl_min,
             p_qgl_list=p_qgl_optim_list
@@ -109,7 +108,6 @@ class OptimizationConstrainedPipelineService:
             "total_qgl": sum(result_optimal_qgl),
             "info": self.list_info,
             "wells_data": wells_data,
-            #"filename": self.csv_file_path,
             "qgl_limit": self.qgl_limit,
             "oil_price": self.p_qoil,
             "gas_price": self.p_qgl
@@ -126,8 +124,8 @@ class OptimizationConstrainedPipelineService:
                 "total_qgl": sum(result_optimal_qgl),
                 "qgl_limit": self.qgl_limit
             },
-            "qgl_range": self.q_gl_range,
-            "q_oil_list": self.q_oil_list,
+            "q_gl_common_range": self.q_gl_common_range,
+            "q_oil_rates_list": self.q_oil_rates_list,
             "p_qgl_optim_list": p_qgl_optim_list,
             "p_qoil_optim_list": p_qoil_optim_list
         }

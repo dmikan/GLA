@@ -68,27 +68,27 @@ class FittingService:
             )
 
             print("✅ Parameters adjusted:", [f"{param:.2f}" for param in params_list])
-            y_pred = self._model_namdar(*params_list)
+            y_pred = self._model_namdar(self.q_gl_common_range, *params_list)
             return np.maximum(y_pred, 0)
         except Exception as e:
             print(f"❌ Error in the adjustment: {str(e)}")
             return np.zeros_like(self.q_gl_common_range) + np.mean(q_fluid)
 
 
-    def _model_namdar(self, a: float, b: float, c: float,
+    def _model_namdar(self, q_gl_common_range: np.ndarray, a: float, b: float, c: float,
                     d: float, e: float) -> np.ndarray:
-        self.q_gl_common_range = np.maximum(self.q_gl_common_range, 1e-10)
+        q_gl_common_range = np.maximum(q_gl_common_range, 1e-10)
         return (
-            a + b * self.q_gl_common_range + c * (self.q_gl_common_range ** 0.7) +
-            d * np.log(self.q_gl_common_range) + e * np.exp(-(self.q_gl_common_range ** 0.6)))
+            a + b * q_gl_common_range + c * (q_gl_common_range ** 0.7) +
+            d * np.log(q_gl_common_range) + e * np.exp(-(q_gl_common_range ** 0.6)))
 
 
-    def _model_dan(self, a: float, b: float, c: float,
+    def _model_dan(self, q_gl_common_range: np.ndarray, a: float, b: float, c: float,
                 d: float, e: float) -> np.ndarray:
-        self.q_gl_common_range = np.maximum(self.q_gl_common_range, 1e-10)
+        q_gl_common_range = np.maximum(q_gl_common_range, 1e-10)
         return (
-            a + b * self.q_gl_common_range + c * (self.q_gl_common_range ** 0.5) +
-            d * np.log(self.q_gl_common_range) + e * np.exp(-self.q_gl_common_range))
+            a + b * q_gl_common_range + c * (q_gl_common_range ** 0.5) +
+            d * np.log(q_gl_common_range) + e * np.exp(-q_gl_common_range))
 
     def perform_fitting_group(self) -> Dict:
         """
@@ -118,7 +118,8 @@ class FittingService:
                 "q_gl_original": q_gl_clean,
                 "q_fluid_original": q_fluid_clean,
                 "q_gl_common_range": self.q_gl_common_range,
-                "q_fluid_predicted": y_pred_fluid
+                "q_fluid_predicted": y_pred_fluid,
+                "q_oil_predicted": y_pred_fluid * (1 - self.wct_list[well_num])
             })
 
         return {
@@ -130,7 +131,7 @@ class FittingService:
 
     def _calculate_oil_rates(self) -> List[List[float]]:
         oil_rates_list = []
-        for fluid_rates_well,wct in zip(self.y_pred_fluid_list, self.wct_list):
-            oil_rates_well = [fluid_rate*(1-wct) for fluid_rate in fluid_rates_well]
+        for fluid_rates_well, wct in zip(self.y_pred_fluid_list, self.wct_list):
+            oil_rates_well = [fluid_rate * (1 - wct) for fluid_rate in fluid_rates_well]
             oil_rates_list.append(oil_rates_well)
         return oil_rates_list
