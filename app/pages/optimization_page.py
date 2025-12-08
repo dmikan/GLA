@@ -10,7 +10,7 @@ class OptimizationPage:
     def __init__(self):
         self.db = SnowflakeDB()
         self.file_upload = FileUploadComponent()
-        self.history = HistoryComponent() 
+        self.history = HistoryComponent()
 
     def show(self):
         optimization_settings = OptimizationSettingsComponent(self.db)
@@ -18,26 +18,26 @@ class OptimizationPage:
         is_data_ready = temp_path is not None and Path(temp_path).exists()
         loader = DataLoader(temp_path)
 
-        
+
         tab1, tab2, tab3 = st.tabs([
-            "Global Optimization", 
-            "Constrained Optimization", 
+            "Constrained Optimization",
+            "Global Optimization",
             "Optimization History"
         ])
 
         with tab1:
             if is_data_ready:
                 loaded_data = loader.load_data()
-                optimization_settings.show_global_settings()
-                optimization_settings.run_global_optimization(loaded_data)
+                optimization_settings.show_constrained_settings()
+                optimization_settings.run_constrained_optimization(loaded_data)
             else:
                 st.warning("Please load data first to perform the optimization")
 
         with tab2:
             if is_data_ready:
                 loaded_data = loader.load_data()
-                optimization_settings.show_constrained_settings()
-                optimization_settings.run_constrained_optimization(loaded_data)
+                optimization_settings.show_global_settings()
+                optimization_settings.run_global_optimization(loaded_data)
             else:
                 st.warning("Please load data first to perform the optimization")
 

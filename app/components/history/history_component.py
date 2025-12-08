@@ -6,10 +6,10 @@ from app.components.optimization.display_constrained_results import DisplayConst
 
 class HistoryComponent:
     def __init__(self):
-        self.results_component = DisplayConstrainedResults()
+        self.display_constrained_results = None
 
     def show(self):
-        st.subheader("Historial of optimizations")
+        st.subheader("History of optimizations")
         db = SnowflakeDB()
         optimization_service = OptimizationService(db)
         try:
@@ -17,27 +17,27 @@ class HistoryComponent:
             self._show_optimizations_table(optimizations)
             self._show_optimization_details(optimizations)
         finally:
-            print("Historial de optimizaciones mostrado correctamente.")
+            print("History of optimizations shown successfully.")
 
     def _show_optimizations_table(self, optimizations):
-        historial_data = [{
+        history_data = [{
             "ID": opt.id,
-            "Fecha": opt.execution_date.strftime("%Y-%m-%d %H:%M:%S"),
-            "Planta": opt.plant_name,
-            "Producción Total (bbl)": opt.total_production,
-            "QGL Total (Mscf)": opt.total_gas_injection,
-            "Límite QGL": opt.gas_injection_limit,
+            "Date": opt.execution_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "Plant": opt.plant_name,
+            "Total Production (bbl)": opt.total_production,
+            "Total QGL (Mscf)": opt.total_gas_injection,
+            "QGL Limit": opt.gas_injection_limit,
             "(USD/bbl)": opt.oil_price,
             "(USD/Mscf)": opt.gas_price
         } for opt in optimizations]
 
-        df_historial = pd.DataFrame(historial_data)
+        df_history = pd.DataFrame(history_data)
 
         st.dataframe(
-            df_historial.style.format({
-                "Producción Total (bbl)": "{:.2f}",
-                "QGL Total (Mscf)": "{:.2f}",
-                "Límite QGL": "{:.2f}",
+            df_history.style.format({
+                "Total Production (bbl)": "{:.2f}",
+                "Total QGL (Mscf)": "{:.2f}",
+                "QGL Limit": "{:.2f}",
                 "(USD/bbl)": "{:.2f}",
                 "(USD/Mscf)": "{:.2f}"
             }),
@@ -47,7 +47,7 @@ class HistoryComponent:
 
     def _show_optimization_details(self, optimizations):
         selected_id = st.selectbox(
-            "Selecciona una optimización para ver detalles",
+            "Select an optimization to view details",
             options=[opt.id for opt in optimizations],
             format_func=lambda x: f"optimization ID: {x} - {next((opt.plant_name for opt in optimizations if opt.id == x), '')}"
         )
@@ -56,21 +56,22 @@ class HistoryComponent:
             selected_optimization = next((opt for opt in optimizations if opt.id == selected_id), None)
             
             if selected_optimization:
-                st.subheader(f"Resultados Detallados por Pozo de planta {selected_optimization.plant_name}")
-                self.results_component._show_well_results(selected_optimization.well_results)
-                
-                st.warning("Las gráficas de comportamiento no están disponibles en el historial...")
+                st.subheader(f"Detailed Results for Plant {selected_optimization.plant_name}")
+
+                display_constrained_results = DisplayConstrainedResults(selected_optimization, selected_optimization.well_results)
+                display_constrained_results.show()
+                st.warning("The behavior graphs are not available in the history yet...")
                 
                 csv = pd.DataFrame([{
-                    "Pozo": pozo.well_number,
-                    "Nombre": pozo.well_name,
-                    "Producción (bbl)": pozo.optimal_production,
-                    "QGL (Mscf)": pozo.optimal_gas_injection
-                } for pozo in selected_optimization.well_results]).to_csv(index=False).encode('utf-8')
+                    "Well": well.well_number,
+                    "Name": well.well_name,
+                    "Production (bbl)": well.optimal_production,
+                    "QGL (Mscf)": well.optimal_gas_injection
+                } for well in selected_optimization.well_results]).to_csv(index=False).encode('utf-8')
                 
                 st.download_button(
-                    label="Descargar resultados como CSV",
+                    label="Download results as CSV",
                     data=csv,
-                    file_name=f"resultados_optimizacion_{selected_optimization.id}.csv",
+                    file_name=f"optimization_results_{selected_optimization.id}.csv",
                     mime='text/csv'
                 )
