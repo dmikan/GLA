@@ -1,6 +1,7 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
+from math import ceil
 
 class Plotter:
     def __init__(self, optimization_results: dict):
@@ -11,7 +12,7 @@ class Plotter:
         self.marker_color = "#C8E6C9"
         self.optimal_line_color = "#FF5252"
         self.last_value_line_color = "#FF1744"
-        self.optimization_results = optimization_results
+        self.optimization_results = optimization_results    
 
     '''
     Method to create a global optimization chart.
@@ -79,8 +80,7 @@ class Plotter:
                 x=1,
                 font=dict(color=self.text_color)
             ),
-            margin=dict(l=50, r=50, b=80, t=80, pad=4),
-            hovermode="x unified"
+            margin=dict(l=50, r=50, b=80, t=80, pad=4)
         )
         return fig
     
@@ -91,15 +91,21 @@ class Plotter:
     It creates a line chart with markers for production and gas injection, as well as optimal lines and optimal points.
     '''
     def create_well_curves(self, well_results):
+        cols = 3
+        rows = int(ceil(len(well_results) / cols))
+        PLOT_HEIGHT = 400 * rows
+        VERTICAL_SPACING = 0.5 / rows
+        MARGIN_TOP_PX = 140
+        MARGIN_BOTTOM_PX = 80
+
         fig_prod = make_subplots(
-            rows=2, 
-            cols=3, 
+            cols=cols, 
+            rows = rows,
             subplot_titles=[f"Well {well.well_name}" for well in well_results],
             horizontal_spacing=0.12,
-            vertical_spacing=0.25
+            vertical_spacing=VERTICAL_SPACING
         )
-        
-
+                
         for idx, (well_data, well_result) in enumerate(zip(self.optimization_results['plot_data'], well_results)):
             row = (idx // 3) + 1
             col = (idx % 3) + 1
@@ -215,14 +221,21 @@ class Plotter:
                 title_font=dict(color=self.text_color),
                 showline=True, 
                 mirror=True
-            )
+            )   
         
         fig_prod.update_layout(
-            height=800,
+            height=PLOT_HEIGHT,
             width=1200,
             plot_bgcolor=self.bg_color,
             paper_bgcolor=self.bg_color,
             font=dict(color=self.text_color),
+            margin=dict(
+                l=50,
+                r=50,
+                b=MARGIN_BOTTOM_PX,
+                t=MARGIN_TOP_PX,
+                pad=4
+            ),
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
@@ -231,14 +244,9 @@ class Plotter:
                 x=1,
                 font=dict(color=self.text_color)
             ),
-            margin=dict(
-                l=50,
-                r=50,
-                b=80,
-                t=140,
-                pad=4
-            )
+            hovermode="x unified"
         )
         return fig_prod
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+

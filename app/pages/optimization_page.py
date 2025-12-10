@@ -2,7 +2,7 @@ import streamlit as st
 from pathlib import Path
 from app.components.file_upload.file_upload_component import FileUploadComponent
 from app.components.optimization.optimization_settings import OptimizationSettingsComponent
-from app.components.history.history_component import HistoryComponent
+from app.components.optimization.optimization_history import OptimizationHistoryComponent
 from backend.models.database import SnowflakeDB
 from backend.services.data_loader_service import DataLoader
 
@@ -10,7 +10,7 @@ class OptimizationPage:
     def __init__(self):
         self.db = SnowflakeDB()
         self.file_upload = FileUploadComponent()
-        self.history = HistoryComponent()
+        self.optimization_history = HistoryComponent()
 
     def show(self):
         optimization_settings = OptimizationSettingsComponent(self.db)
@@ -42,4 +42,5 @@ class OptimizationPage:
                 st.warning("Please load data first to perform the optimization")
 
         with tab3:
-            self.history.show()
+            self.optimization_history.show_optimization_history()
+            self.optimization_history.show_well_details()

@@ -22,13 +22,16 @@ class OptimizationSettingsComponent:
         self.qgl_min_constrained = 300
         self.p_qoil_constrained = 70.0
         self.p_qgl_constrained = 300.0
+        self.SESSION_KEY_GLOBAL = "global_optimization_results"
+        self.SESSION_KEY_CONSTR = "constrained_optimization_results"
+        self.SESSION_KEY_WELL = "well_results"
 
     '''
     Method to show the global optimization.
     Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
     '''
     def show_global_settings(self):
-
+        
         with st.expander("Global Optimization Configuration", expanded=True):
 
             row1_col1, row1_col2 = st.columns(2)
@@ -37,7 +40,7 @@ class OptimizationSettingsComponent:
                     "Oil price (USD/bbl)",
                     min_value=0.1,
                     max_value=None,
-                    value=70.0,
+                    value=100.0,
                     step=1.0,
                     key="p_qoil_global"
                 )
@@ -47,7 +50,7 @@ class OptimizationSettingsComponent:
                     "Gas cost (USD/Mscf)",
                     min_value=0.1,
                     max_value=None,
-                    value=300.0,
+                    value=1.0,
                     step=1.0,
                     key="p_qgl_global"
                 )
@@ -57,20 +60,24 @@ class OptimizationSettingsComponent:
             with row2_col1:
                 self.qgl_min_global = st.number_input(
                     "Minimum QGL limit (Mscf)",
-                    min_value=0,
+                    min_value=0.1,
                     max_value=None,
-                    value=300,
-                    step=100,
+                    value=1.0,
+                    step=1.0,
                     key="qgl_min_global"
                 )
 
-    def run_global_optimization(self, loaded_data):
+        if self.SESSION_KEY_GLOBAL in st.session_state:
+            optimization_results = st.session_state[self.SESSION_KEY_GLOBAL]
+            display_global_results = DisplayGlobalResults(optimization_results)
+            display_global_results.show()
 
+    def run_global_optimization(self, loaded_data):           
         q_gl_list, q_fluid_list, wct_list, list_info = loaded_data
 
         if not q_gl_list:
-             st.warning("No valid data loaded to execute global optimization.")
-             return
+            st.warning("No valid data loaded to execute global optimization.")
+            return
 
         if st.button("Global Optimization"):
             with st.spinner("Processing data..."):
@@ -87,18 +94,23 @@ class OptimizationSettingsComponent:
                     st.info("Calculating global optimization curve...")
 
                     pipeline = OptimizationGlobalPipelineService(
-                                                         q_gl_common_range=fit["q_gl_common_range"],
-                                                         q_oil_rates_list=fit["q_oil_rates_list"],
-                                                         qgl_min=self.qgl_min_global,
-                                                         p_qoil=self.p_qoil_global,
-                                                         p_qgl=self.p_qgl_global,
-                                                         max_iterations=40,
-                                                         max_qgl=20000)
+                                                                q_gl_common_range=fit["q_gl_common_range"],
+                                                                q_oil_rates_list=fit["q_oil_rates_list"],
+                                                                qgl_min=self.qgl_min_global,
+                                                                p_qoil=self.p_qoil_global,
+                                                                p_qgl=self.p_qgl_global,
+                                                                max_iterations=40,
+                                                                max_qgl=20000)
                     optimization_results = pipeline.run()
+                    
+                    # Save GLOBAL results in session_state
+                    st.session_state[self.SESSION_KEY_GLOBAL] = optimization_results
+                    
                     st.info("Total QGL has stabilized. Finalizing global optimization.")
 
                     display_global_results = DisplayGlobalResults(optimization_results)
-                    display_global_results.show()
+                    display_global_results.show() 		
+
                 except Exception as e:
                     st.error(f"❌ Error during global optimization: {str(e)}")
                     st.exception(e)
@@ -158,12 +170,21 @@ class OptimizationSettingsComponent:
                     key="p_qgl"
                 )
 
+        # Logic to show saved CONSTR results
+        if self.SESSION_KEY_CONSTR in st.session_state and self.SESSION_KEY_WELL in st.session_state:
+            optimization_results = st.session_state[self.SESSION_KEY_CONSTR]
+            well_results = st.session_state[self.SESSION_KEY_WELL]
+            display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
+            display_constrained_results.show()
+
+            
+
     def run_constrained_optimization(self, loaded_data):
         q_gl_list, q_fluid_list, wct_list, list_info = loaded_data
 
         if not q_gl_list:
-             st.warning("There are no valid data loaded to execute the constrained optimization.")
-             return
+            st.warning("There are no valid data loaded to execute the constrained optimization.")
+            return
 
 
         if st.button("Execute Constrained Optimization"):
@@ -173,25 +194,32 @@ class OptimizationSettingsComponent:
                     fit = fitting_service.perform_fitting_group()
 
                     pipeline = OptimizationConstrainedPipelineService(
-                                                         q_gl_common_range=fit['q_gl_common_range'],
-                                                         q_oil_rates_list=fit["oil_rates_list"],
-                                                         plot_data=fit["plot_data"],
-                                                         list_info=list_info,
-                                                         qgl_limit=self.qgl_limit_constrained,
-                                                         qgl_min=self.qgl_min_constrained,
-                                                         p_qoil=self.p_qoil_constrained,
-                                                         p_qgl=self.p_qgl_constrained,
-                                                         db=self.db
-                    )
+                                                                    q_gl_common_range=fit['q_gl_common_range'],
+                                                                    q_oil_rates_list=fit["q_oil_rates_list"],
+                                                                    plot_data=fit["plot_data"],
+                                                                    list_info=list_info,
+                                                                    qgl_limit=self.qgl_limit_constrained,
+                                                                    qgl_min=self.qgl_min_constrained,
+                                                                    p_qoil=self.p_qoil_constrained,
+                                                                    p_qgl=self.p_qgl_constrained,
+                                                                    db=self.db
+                                    )
                     optimization_results = pipeline.run()
+                    
+                    # Save CONSTR results in session_state
+                    st.session_state[self.SESSION_KEY_CONSTR] = optimization_results
+                    
                     st.success("Constrained optimization completed!")
-
 
                     well_result_service = WellResultService(self.db)
                     well_results = well_result_service.get_latest_well_results()
+                    
+                    # Save WELL results in session_state
+                    st.session_state[self.SESSION_KEY_WELL] = well_results
 
                     display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
                     display_constrained_results.show()
+
                 except Exception as e:
                     st.error(f"❌ Error during constrained optimization: {str(e)}")
                     st.exception(e)
