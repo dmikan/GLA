@@ -11,3 +11,9 @@
 4. (medio) procentaje de fidelidad en función de los puntos o medidas.
 
 5. (baja) tabla en base de datos para información de optimizacion global. 
+
+6. agregar MRP a optimizacion global
+
+7. agregar wct a manual input.
+
+8. descargar informe en pdf. 
