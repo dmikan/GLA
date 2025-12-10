@@ -125,7 +125,7 @@ class FittingService:
         return {
             "q_gl_common_range": self.q_gl_common_range,
             "y_pred_fluid_list": self.y_pred_fluid_list,
-            "oil_rates_list": self._calculate_oil_rates(),
+            "q_oil_rates_list": self._calculate_oil_rates(),
             "plot_data": self.plot_data
         }
 
