@@ -244,7 +244,6 @@ class Plotter:
                 x=1,
                 font=dict(color=self.text_color)
             ),
-            hovermode="x unified"
         )
         return fig_prod
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
