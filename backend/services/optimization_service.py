@@ -81,6 +81,7 @@ class OptimizationService:
 
 if __name__ == "__main__":
     # Test the OptimizationService class
+    print("Testing OptimizationService class...")
     db = SnowflakeDB()
     #Optimization.create_table(db)
     optimization_service = OptimizationService(db)

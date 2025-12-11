@@ -68,6 +68,10 @@ class Optimization:
     @classmethod
     def from_dict(cls, data: dict) -> 'Optimization':
         """Create object from dictionary"""
+        if not data:
+            return None
+                 
+        data = {k.lower(): v for k, v in data.items()} 
         return cls(
             id=data.get('id'),
             execution_date=data.get('execution_date', datetime.now()),
