@@ -25,13 +25,14 @@ class Plotter:
         fig = go.Figure()
         fig.add_trace(
             go.Scatter(
-                x=self.optimization_results["total_qgl"],
-                y=self.optimization_results["total_production"],
+                x=self.optimization_results["qgl_dense"],
+                y=self.optimization_results["prod_dense"],
                 mode='lines+markers',
                 name='Total Production',
                 line=dict(width=3, color=self.line_color),
                 marker=dict(color=self.marker_color, size=7),
-                showlegend=True
+                showlegend=True,
+                legendgroup='group1'
             )
         )
 
@@ -45,8 +46,39 @@ class Plotter:
             annotation_text=f'{last_production:.2f} bbl',
             annotation_position="bottom left",
             annotation_font=dict(color=self.last_value_line_color),
-            name='Last Production'
+            name='Last Production',
+            legendgroup='group2'
         )
+
+             
+        fig.add_trace(
+            go.Scatter(
+                x=[self.optimization_results["p_qgl_optim_total"], self.optimization_results["p_qgl_optim_total"]],
+                y=[self.optimization_results["total_production"][0], self.optimization_results["p_qoil_optim_total"]],
+                mode='lines',
+                name='Optimal QGL',
+                line=dict(color=self.marker_color, width=2, dash='dash'),
+                showlegend=True,
+                legendgroup='group3'
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=[self.optimization_results["p_qgl_optim_total"]],
+                y=[self.optimization_results["p_qoil_optim_total"]],
+                mode='markers',
+                name='Optimal Point',
+                marker=dict(
+                    color=self.optimal_line_color, 
+                    size=10, 
+                    symbol='x'
+                ),
+                showlegend=True,
+                legendgroup='group4'
+            )
+        )        
+
 
         fig.update_layout(
             xaxis=dict(

@@ -44,7 +44,7 @@ class OptimizationExecutionComponent:
                                                                 p_qoil=global_settings['p_qoil_global'],
                                                                 p_qgl=global_settings['p_qgl_global'],
                                                                 max_iterations=40,
-                                                                max_qgl=20000)
+                                                                max_qgl=40000)
                     optimization_results = pipeline.run()
                     
                     # Save GLOBAL results in session_state

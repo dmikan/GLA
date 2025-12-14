@@ -1,5 +1,6 @@
 from backend.services.optimization_model_service import OptimizationModel
 import numpy as np
+from scipy.interpolate import interp1d
 
 class OptimizationGlobalPipelineService:
     """Handles the complete optimization workflow from data processing to solution"""
@@ -47,11 +48,14 @@ class OptimizationGlobalPipelineService:
     def run(self) -> dict:
         log_vals = np.logspace(start=1, stop=np.log10(self.max_qgl), num=self.max_iterations)
         log_vals = np.unique(log_vals)
+        
         for i, qgl_limit in enumerate(log_vals): 
             dic_optim_result = self._execute(qgl_limit)
             qgl_history = self._list_optim(dic_optim_result, qgl_limit)
-            if self._has_stabilized(values=qgl_history):
-                break     
+            if self._has_stabilized(values=qgl_history, window_size=12, tolerance=1e-15):
+                break    
+        self._interpolate_results()
+        self._calculate_global_marginal_analysis()     
         return self.optimization_results
 
     ''' 
@@ -140,3 +144,55 @@ class OptimizationGlobalPipelineService:
         self.optimization_results["total_qgl"].append(dic_optim_result["total_qgl"])
         self.qgl_history.append(current_qgl)
         return self.qgl_history
+
+
+    def _calculate_global_marginal_analysis(self) -> None:
+        """Calculate optimal gas lift rates using marginal analysis"""
+        delta_q_gl_total = np.diff(self.optimization_results["qgl_dense"])
+        delta_q_oil_total = np.diff(self.optimization_results["prod_dense"])
+        mrp_total = self.p_qoil * (delta_q_oil_total / delta_q_gl_total)
+        qgl_values_total = self.optimization_results["qgl_dense"][:-1]
+
+        optimal_idx = np.where(mrp_total >= self.p_qgl)[0][-1] if any(mrp_total >= self.p_qgl) else len(mrp_total)-1
+        p_qgl_optim_total = qgl_values_total[optimal_idx]
+        p_qoil_optim_total = self.optimization_results["prod_dense"][optimal_idx]
+        self.optimization_results["p_qgl_optim_total"] = p_qgl_optim_total
+        self.optimization_results["p_qoil_optim_total"] = p_qoil_optim_total
+
+
+    def _interpolate_results(self) -> None:
+        """
+        Interpolate total production (Y) vs. total QGL (X) to create a smooth curve 
+        and generates a new, dense set of points for marginal analysis.
+        
+        Returns:
+            dict: Diccionario con 'qgl_dense' (X) y 'prod_dense' (Y) interpolados.
+        """
+        
+        # 1. get data points
+        qgl_points = np.array(self.optimization_results["total_qgl"])
+        prod_points = np.array(self.optimization_results["total_production"])
+        
+        # 2. remove duplicates and sort
+        unique_indices = np.unique(qgl_points, return_index=True)[1]
+        qgl_points = qgl_points[unique_indices]
+        prod_points = prod_points[unique_indices]
+        
+        # 3. create interpolation function
+        f_interp = interp1d(
+            qgl_points, 
+            prod_points, 
+            kind='linear' 
+        )
+        
+        # 4. generate new dense range of QGL
+        qgl_min_interp = qgl_points.min()
+        qgl_max_interp = qgl_points.max()
+        
+        qgl_dense = np.linspace(qgl_min_interp, qgl_max_interp, 100)
+        
+        # 5. apply interpolation function
+        prod_dense = f_interp(qgl_dense)
+        
+        self.optimization_results["qgl_dense"] = qgl_dense
+        self.optimization_results["prod_dense"] = prod_dense
