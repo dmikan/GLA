@@ -48,7 +48,7 @@ class OptimizationGlobalPipelineService:
         log_vals = np.logspace(start=1, stop=np.log10(self.max_qgl), num=self.max_iterations)
         log_vals = np.unique(log_vals)
         for i, qgl_limit in enumerate(log_vals): 
-            dic_optim_result = self.execute(qgl_limit)
+            dic_optim_result = self._execute(qgl_limit)
             qgl_history = self._list_optim(dic_optim_result, qgl_limit)
             if self._has_stabilized(values=qgl_history):
                 break     
@@ -106,7 +106,7 @@ class OptimizationGlobalPipelineService:
     this method runs the complete optimization pipeline using the other methods
     it returns the optimization results
     '''
-    def execute(self, qgl_limit) -> dict:
+    def _execute(self, qgl_limit) -> dict:
         p_qgl_optim_list = self._calculate_marginal_analysis() # Step 1: Marginal analysis 
         self._setup_optimization_model(p_qgl_optim_list, qgl_limit) # Step 2: Model setup
         self.model.solve_prob() # Step 3: Solve optimization
