@@ -18,13 +18,19 @@ class FittingService:
         self.q_gl_list = q_gl_list
         self.q_fluid_list = q_fluid_list
         self.wct_list = wct_list
-        self.q_gl_common_range = None
-        self.y_pred_fluid_list = None
+        self.q_gl_common_range_log = None
+        self.q_gl_common_range_linear = None
+        self.y_pred_fluid_list_log = None
+        self.y_pred_fluid_list_linear = None
         self.plot_data = None
 
-    def _calculate_qgl_range(self) -> np.ndarray:
+    def _calculate_qgl_range_log(self) -> np.ndarray:
         q_gl_max = max([np.max(j) for j in self.q_gl_list])
         return np.logspace(0.1, np.log10(q_gl_max), 1000)
+
+    def _calculate_qgl_range_linear(self) -> np.ndarray:
+        q_gl_max = max([np.max(j) for j in self.q_gl_list])
+        return np.linspace(0.1, q_gl_max, 10000)
 
 
     def _prepare_well_data(self, q_gl: List[float], q_fluid: List[float]) -> Tuple[np.ndarray, np.ndarray]:
@@ -54,7 +60,7 @@ class FittingService:
         )
         return p0, bounds
 
-    def _fit_model(self, q_gl: np.ndarray, q_fluid: np.ndarray) -> np.ndarray:
+    def _fit_model(self, q_gl: np.ndarray, q_fluid: np.ndarray, range_type: str = "log") -> np.ndarray:
         """Internal method to fit a single well's data"""
         try:
             p0, bounds = self._trinidad_parameters()
@@ -66,9 +72,11 @@ class FittingService:
                 bounds=bounds,
                 maxfev=500000
             )
-
-            print("✅ Parameters adjusted:", [f"{param:.2f}" for param in params_list])
-            y_pred = self._model_namdar(self.q_gl_common_range, *params_list)
+            if range_type == "log":
+                print("✅ Parameters adjusted:", [f"{param:.2f}" for param in params_list])
+                y_pred = self._model_namdar(self.q_gl_common_range_log, *params_list)
+            else:
+                y_pred = self._model_namdar(self.q_gl_common_range_linear, *params_list)
             return np.maximum(y_pred, 0)
         except Exception as e:
             print(f"❌ Error in the adjustment: {str(e)}")
@@ -101,37 +109,41 @@ class FittingService:
             - plot_data: Visualization-ready data for each well
             - oil_rates: Calculated oil rates per well
         """
-        self.q_gl_common_range = self._calculate_qgl_range()
-        self.y_pred_fluid_list = []
+        self.q_gl_common_range_log = self._calculate_qgl_range_log()
+        self.q_gl_common_range_linear = self._calculate_qgl_range_linear()
+        self.y_pred_fluid_list_log = []
+        self.y_pred_fluid_list_linear = []
         self.plot_data = []
 
         for well_num, (q_gl, q_fluid) in enumerate(zip(self.q_gl_list, self.q_fluid_list)):
 
             # Prepare, clean data and perform fitting
             q_gl_clean, q_fluid_clean = self._prepare_well_data(q_gl, q_fluid)
-            y_pred_fluid = self._fit_model(q_gl_clean, q_fluid_clean)
-            self.y_pred_fluid_list.append(y_pred_fluid)
+            y_pred_fluid_log = self._fit_model(q_gl=q_gl_clean, q_fluid=q_fluid_clean, range_type="log")
+            y_pred_fluid_linear = self._fit_model(q_gl=q_gl_clean, q_fluid=q_fluid_clean, range_type="linear")
+            self.y_pred_fluid_list_log.append(y_pred_fluid_log)
+            self.y_pred_fluid_list_linear.append(y_pred_fluid_linear)
 
             # Store plot data
             self.plot_data.append({
                 "well_num": well_num + 1,
                 "q_gl_original": q_gl_clean,
                 "q_fluid_original": q_fluid_clean,
-                "q_gl_common_range": self.q_gl_common_range,
-                "q_fluid_predicted": y_pred_fluid,
-                "q_oil_predicted": y_pred_fluid * (1 - self.wct_list[well_num])
+                "q_gl_common_range": self.q_gl_common_range_log,
+                "q_fluid_predicted": y_pred_fluid_log,
+                "q_oil_predicted": y_pred_fluid_log * (1 - self.wct_list[well_num])
             })
 
         return {
-            "q_gl_common_range": self.q_gl_common_range,
-            "y_pred_fluid_list": self.y_pred_fluid_list,
+            "q_gl_common_range": self.q_gl_common_range_linear,
+            "y_pred_fluid_list": self.y_pred_fluid_list_linear,
             "q_oil_rates_list": self._calculate_oil_rates(),
             "plot_data": self.plot_data
         }
 
     def _calculate_oil_rates(self) -> List[List[float]]:
         oil_rates_list = []
-        for fluid_rates_well, wct in zip(self.y_pred_fluid_list, self.wct_list):
+        for fluid_rates_well, wct in zip(self.y_pred_fluid_list_linear, self.wct_list):
             oil_rates_well = [fluid_rate * (1 - wct) for fluid_rate in fluid_rates_well]
             oil_rates_list.append(oil_rates_well)
         return oil_rates_list
