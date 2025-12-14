@@ -58,6 +58,7 @@ class OptimizationConstrainedPipelineService:
             optimal_idx = np.where(mrp >= self.p_qgl)[0][-1] if any(mrp >= self.p_qgl) else len(mrp)-1
             p_qgl_optim_list.append(qgl_values[optimal_idx])
             p_qoil_optim_list.append(self.q_oil_rates_list[well][optimal_idx])
+            print(f"mrp optim {well}: {mrp[optimal_idx]}")
 
         return p_qgl_optim_list, p_qoil_optim_list
 
