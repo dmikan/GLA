@@ -32,6 +32,7 @@ class OptimizationPage:
                 loaded_data = loader.load_data()
                 constrained_settings = optimization_settings.choose_constrained_settings()
                 optimization_execution.run_constrained_optimization(loaded_data, constrained_settings)
+                
             else:
                 st.warning("Please load data first to perform the optimization")
 

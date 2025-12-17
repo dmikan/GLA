@@ -78,7 +78,7 @@ class DisplayConstrainedResults:
             return
         self.plotter = Plotter(self.optimization_results)
         fig_prod = self.plotter.create_well_curves(self.well_results)
-        st.plotly_chart(fig_prod, use_container_width=True, key="constrained_well_curves_prod")
+        st.plotly_chart(fig_prod, use_container_width=True)
 
 
 
