@@ -23,10 +23,11 @@ class OptimizationExecutionComponent:
             st.warning("No valid data loaded to execute global optimization.")
             return
 
+        just_calculated = False
         if st.button("Global Optimization"):
             with st.spinner("Processing data..."):
                 try:
-
+                    
                     fitting_service = FittingService(q_gl_list, q_fluid_list, wct_list)
                     fit = fitting_service.perform_fitting_group()
 
@@ -53,11 +54,17 @@ class OptimizationExecutionComponent:
                     st.info("Total QGL has stabilized. Finalizing global optimization.")
 
                     display_global_results = DisplayGlobalResults(optimization_results)
-                    display_global_results.show() 		
+                    display_global_results.show() 
+                    just_calculated = True	
 
                 except Exception as e:
                     st.error(f"❌ Error during global optimization: {str(e)}")
                     st.exception(e)
+        
+        if not just_calculated and self.SESSION_KEY_GLOBAL in st.session_state:
+            optimization_results = st.session_state[self.SESSION_KEY_GLOBAL]
+            display_global_results = DisplayGlobalResults(optimization_results)
+            display_global_results.show()
 
 
 
@@ -69,7 +76,7 @@ class OptimizationExecutionComponent:
             st.warning("There are no valid data loaded to execute the constrained optimization.")
             return
 
-
+        just_calculated = False
         if st.button("Execute Constrained Optimization"):
             with st.spinner("Processing data..."):
                 try:
@@ -102,7 +109,15 @@ class OptimizationExecutionComponent:
 
                     display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
                     display_constrained_results.show()
+                    just_calculated = True
 
                 except Exception as e:
                     st.error(f"❌ Error during constrained optimization: {str(e)}")
                     st.exception(e)
+
+        # Logic to show saved CONSTR results
+        if not just_calculated and self.SESSION_KEY_CONSTR in st.session_state and self.SESSION_KEY_WELL in st.session_state:
+            optimization_results = st.session_state[self.SESSION_KEY_CONSTR]
+            well_results = st.session_state[self.SESSION_KEY_WELL]
+            display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
+            display_constrained_results.show()

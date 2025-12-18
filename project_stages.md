@@ -12,8 +12,9 @@
 
 5. (baja) tabla en base de datos para información de optimizacion global. 
 
-6. agregar MRP a optimizacion global
+6. agregar MRP a optimizacion global (OK)
 
 7. agregar wct a manual input.
-
 8. descargar informe en pdf. 
+9. arreglar lo del la lista de well restuls para optimizaciones anterioes en el historal (tab 3)
+10. implementar una tabla en la base de datos para la optimizacion global.
