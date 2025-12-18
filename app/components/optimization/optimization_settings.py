@@ -58,11 +58,6 @@ class OptimizationSettingsComponent:
                     key="qgl_min_global"
                 )
 
-        if self.SESSION_KEY_GLOBAL in st.session_state:
-            optimization_results = st.session_state[self.SESSION_KEY_GLOBAL]
-            display_global_results = DisplayGlobalResults(optimization_results)
-            display_global_results.show()
-
         return dict(
             p_qoil_global=self.p_qoil_global,
             p_qgl_global=self.p_qgl_global,
@@ -122,14 +117,6 @@ class OptimizationSettingsComponent:
                     step=1.0,
                     key="p_qgl"
                 )
-
-        # Logic to show saved CONSTR results
-        if self.SESSION_KEY_CONSTR in st.session_state and self.SESSION_KEY_WELL in st.session_state:
-            optimization_results = st.session_state[self.SESSION_KEY_CONSTR]
-            well_results = st.session_state[self.SESSION_KEY_WELL]
-            display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
-            display_constrained_results.show()
-
 
         return dict(
             qgl_limit_constrained=self.qgl_limit_constrained,

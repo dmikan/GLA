@@ -12,6 +12,7 @@ class Plotter:
         self.marker_color = "#C8E6C9"
         self.optimal_line_color = "#FF5252"
         self.last_value_line_color = "#FF1744"
+        self.fluid_line_color = "#E0970E"
         self.optimization_results = optimization_results    
 
     '''
@@ -116,7 +117,7 @@ class Plotter:
                     y=well_data["q_fluid_predicted"],
                     mode='lines',
                     name='Adjusted Fluid Curve',
-                    line=dict(width=3, color=self.line_color),
+                    line=dict(width=3, color=self.fluid_line_color),
                     showlegend=True if idx == 0 else False,
                     legendgroup='group1'
                 ),
@@ -129,7 +130,7 @@ class Plotter:
                     y=well_data["q_oil_predicted"],
                     mode='lines',
                     name='Adjusted Oil Curve',
-                    line=dict(width=3, color=self.optimal_line_color),
+                    line=dict(width=3, color=self.line_color),
                     showlegend=True if idx == 0 else False,
                     legendgroup='group2'
                 ),
