@@ -14,7 +14,15 @@
 
 6. agregar MRP a optimizacion global (OK)
 
-7. agregar wct a manual input.
+7. agregar wct a manual input. (D)
 8. descargar informe en pdf. 
-9. arreglar lo del la lista de well restuls para optimizaciones anterioes en el historal (tab 3)
+9. arreglar lo del la lista de well restuls para optimizaciones anterioes en el historal (tab 3) (A)
 10. implementar una tabla en la base de datos para la optimizacion global.
+11. kpi para optimizacion global (punto óptimo máximo). (B)
+12. kpi con diferencia de gas para alcanzar la produccion máxima (constrained) - generalizacion del kpi actual. (C)
+13. (criticidad baja) modelo mrp opcional actibable/desactivable. 
+14. dos casos de estudio: fisico y económico (usar varios pozos de los datos ya disponibles).
+
+
+ideas:
+- (actualización tab2) visualizar las pruebas y trazar las curvas de performance (incluyendo en color la fecha). parametro: rango de fechas y ver los datos de lso diferentes pozos.  
