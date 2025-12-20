@@ -1,5 +1,5 @@
 import streamlit as st
-from backend.models.database import SnowflakeDB
+from backend.entities.database import SnowflakeDB
 from backend.services.optimization_service import OptimizationService
 from backend.services.optimization_global_pipeline_service import OptimizationGlobalPipelineService
 from backend.services.optimization_constrained_pipeline_service import OptimizationConstrainedPipelineService

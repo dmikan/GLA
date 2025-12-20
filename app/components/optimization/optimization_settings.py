@@ -1,5 +1,5 @@
 import streamlit as st
-from backend.models.database import SnowflakeDB
+from backend.entities.database import SnowflakeDB
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
 from app.components.optimization.display_global_results import DisplayGlobalResults
 

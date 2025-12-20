@@ -1,6 +1,6 @@
 from typing import List, Optional
-from backend.models.optimization import Optimization
-from backend.models.database import SnowflakeDB
+from backend.entities.optimization import Optimization
+from backend.entities.database import SnowflakeDB
 import pandas as pd
 from datetime import datetime
 

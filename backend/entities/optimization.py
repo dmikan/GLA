@@ -6,7 +6,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import List
 
-from backend.models.well_result import WellResult
+from backend.entities.well_result import WellResult
 
 @dataclass
 class Optimization:
@@ -53,6 +53,7 @@ class Optimization:
     def table_name(self) -> str:
         return "optimizations"
 
+    @classmethod 
     def to_dict(self) -> dict:
         """Convert object to dictionary for database operations"""
         return {

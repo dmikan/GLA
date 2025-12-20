@@ -1,8 +1,8 @@
 from backend.services.optimization_service import OptimizationService
 from backend.services.well_result_service import WellResultService
-from backend.models.well_result import WellResult
-from backend.models.optimization import Optimization
-from backend.models.database import SnowflakeDB
+from backend.entities.well_result import WellResult
+from backend.entities.optimization import Optimization
+from backend.entities.database import SnowflakeDB
 
 class ResultsService:
     def __init__(self, db: SnowflakeDB):

@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
-from backend.models.database import SnowflakeDB
+from backend.entities.database import SnowflakeDB
 from backend.services.optimization_service import OptimizationService
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
+from backend.entities.optimization import Optimization
 
 class OptimizationHistoryComponent:
     def __init__(self, db: SnowflakeDB):
@@ -20,8 +21,9 @@ class OptimizationHistoryComponent:
         finally:
             print("History of optimizations shown successfully.")
 
+
     def _show_optimizations_table(self):
-        history_data = [{
+        history_optimizations_data: list[dict] = [{
             "ID": opt.id,
             "Date": opt.execution_date.strftime("%Y-%m-%d %H:%M:%S"),
             "Plant": opt.plant_name,
@@ -32,10 +34,10 @@ class OptimizationHistoryComponent:
             "(USD/Mscf)": opt.gas_price
         } for opt in self.optimizations]
 
-        df_history = pd.DataFrame(history_data)
+        df_history_optimizations = pd.DataFrame(data=history_optimizations_data)
 
         st.dataframe(
-            df_history.style.format({
+            df_history_optimizations.style.format({
                 "Total Production (bbl)": "{:.2f}",
                 "Total QGL (Mscf)": "{:.2f}",
                 "QGL Limit": "{:.2f}",
@@ -46,6 +48,7 @@ class OptimizationHistoryComponent:
             height=300
         )
 
+
     def _show_optimization_details(self):
         selected_id = st.selectbox(
             "Select an optimization to view details",
@@ -54,7 +57,7 @@ class OptimizationHistoryComponent:
         )
 
         if selected_id:
-            selected_optimization = next((opt for opt in self.optimizations if opt.id == selected_id), None)
+            selected_optimization: Optimization = next((opt for opt in self.optimizations if opt.id == selected_id), None)
             
             if selected_optimization:
                 st.subheader(f"Detailed Results for Plant {selected_optimization.plant_name}")

@@ -1,5 +1,5 @@
-from backend.models.well_result import WellResult
-from backend.models.database import SnowflakeDB
+from backend.entities.well_result import WellResult
+from backend.entities.database import SnowflakeDB
 from typing import List
 
 class WellResultService:

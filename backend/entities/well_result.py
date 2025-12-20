@@ -50,11 +50,12 @@ class WellResult:
     @classmethod
     def from_dict(cls, data: dict) -> 'WellResult':
         """Create object from dictionary"""
+        data = {k.lower(): v for k, v in data.items()}  
         return cls(
-            id=data.get('id'.upper()),
-            optimization_id=data.get('optimization_id'.upper()),
-            well_number=data.get('well_number'.upper(), 0),
-            well_name=data.get('well_name'.upper(), ''),
-            optimal_production=data.get('optimal_production'.upper(), 0.0),
-            optimal_gas_injection=data.get('optimal_gas_injection'.upper(), 0.0)
+            id=data.get('id'),
+            optimization_id=data.get('optimization_id'),
+            well_number=data.get('well_number', 0),
+            well_name=data.get('well_name', ''),
+            optimal_production=data.get('optimal_production', 0.0),
+            optimal_gas_injection=data.get('optimal_gas_injection', 0.0)
         )

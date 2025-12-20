@@ -4,7 +4,7 @@ from app.components.file_upload.file_upload_component import FileUploadComponent
 from app.components.optimization.optimization_settings import OptimizationSettingsComponent
 from app.components.optimization.optimization_history import OptimizationHistoryComponent
 from app.components.optimization.optimization_execution import OptimizationExecutionComponent
-from backend.models.database import SnowflakeDB
+from backend.entities.database import SnowflakeDB
 from backend.services.data_loader_service import DataLoader
 
 class OptimizationPage:
