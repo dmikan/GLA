@@ -8,7 +8,7 @@ class OptimizationService:
     def __init__(self, db: SnowflakeDB):
         self.db = db # it is an aggregation relationship. it would be composition if self.db = SnowflakeDB().
     
-    def create_optimization(self, data: dict) -> int:
+    def write_in_database(self, data: dict) -> int:
         try:
             # step 1: get the next value of the sequence
             id_query = "SELECT optimizations_id_seq.NEXTVAL"
@@ -22,7 +22,6 @@ class OptimizationService:
             oil_price = data.get("oil_price", 0.0)
             gas_price = data.get("gas_price", 0.0)
             field_name = data["info"][0]
-            #filename = data["filename"]
 
             # step 3: make the insert with the extracted values
             query = """
@@ -40,8 +39,7 @@ class OptimizationService:
                 float(qgl_limit),
                 float(oil_price),
                 float(gas_price),
-                str(field_name),
-                #str(filename),
+                str(field_name)
             )
             self.db.execute_query(query, params)
             return new_id
@@ -60,9 +58,7 @@ class OptimizationService:
         return Optimization.from_dict(result[0]) if result else None
     
 
-
-
-    def get_all_optimizations(self, limit: int = None) -> List[Optimization]:
+    def get_field_optimizations(self, limit: int = None) -> List[Optimization]:
         """Get all optimizations ordered by date descending"""
         query = """
         SELECT * FROM optimizations 
@@ -71,8 +67,8 @@ class OptimizationService:
         if limit is not None:
             query += f" LIMIT {limit}"
         results = self.db.execute_query(query)
-        #df = pd.read_sql(query, self.db.get_connection())
         return [Optimization.from_dict(row) for row in results]
+
 
 
 

@@ -7,7 +7,7 @@ class WellResultService:
         self.db = db
     
     
-    def create_well_batch(self, data: dict, optimization_id: int) -> bool:
+    def write_in_database(self, data: dict, optimization_id: int) -> bool:
         """Create multiple well results in a single transaction"""
         query = """
         INSERT INTO well_results (
@@ -51,7 +51,7 @@ class WellResultService:
         results = self.db.execute_query(query) 
         return [WellResult.from_dict(row) for row in results]
     
-    def get_by_optimization(self, optimization_id: int) -> list[WellResult]:
+    def get_wells_optimizations(self, optimization_id: int) -> list[WellResult]:
         """Get all well results for an optimization"""
         query = "SELECT * FROM well_results WHERE optimization_id = %s"
         results = self.db.execute_query(query, (optimization_id,))

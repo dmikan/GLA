@@ -19,7 +19,6 @@ class Optimization:
     oil_price: float = 0.0  # Oil price per barrel (USD)
     gas_price: float = 0.0  # Gas price per unit (USD)
     plant_name: str = ""  # Plant/field name
-    source_file: str = ""  # Original data source file
     well_results: List['WellResult'] = None  # List of associated well results
 
     def __post_init__(self):
@@ -62,8 +61,7 @@ class Optimization:
             "gas_injection_limit": self.gas_injection_limit,
             "oil_price": self.oil_price,
             "gas_price": self.gas_price,
-            "plant_name": self.plant_name,
-            "source_file": self.source_file
+            "plant_name": self.plant_name
         }
 
     @classmethod
@@ -81,6 +79,5 @@ class Optimization:
             gas_injection_limit=data.get('gas_injection_limit', 0.0),
             oil_price=data.get('oil_price', 0.0),
             gas_price=data.get('gas_price', 0.0),
-            plant_name=data.get('plant_name', ''),
-            source_file=data.get('source_file', '')
+            plant_name=data.get('plant_name', '')
         )

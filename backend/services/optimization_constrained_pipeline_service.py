@@ -1,6 +1,6 @@
  # services/optimization_pipeline.py
 from backend.services.optimization_model_service import OptimizationModel
-from backend.services.results_service import ResultsService
+from backend.services.saving_orchestration_service import SavingOrchestrationService
 import numpy as np
 from typing import Dict, List, Tuple
 from backend.entities.database import SnowflakeDB
@@ -112,7 +112,7 @@ class OptimizationConstrainedPipelineService:
             "oil_price": self.p_qoil,
             "gas_price": self.p_qgl
         }
-        result_service = ResultsService(self.db)
+        result_service = SavingOrchestrationService(self.db)
         result_service.save_optimization_results(data)
 
 
