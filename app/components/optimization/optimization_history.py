@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from backend.entities.database import SnowflakeDB
 from backend.services.optimization_service import OptimizationService
+from backend.services.well_result_service import WellResultService
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
 from backend.entities.optimization import Optimization
 
@@ -9,21 +10,22 @@ class OptimizationHistoryComponent:
     def __init__(self, db: SnowflakeDB):
         self.db = db
         self.display_constrained_results = None
-        self.optimizations = None
+        self.field_optimizations = None
+        self.wells_optimizations = None
 
     def show(self):
         st.subheader("History of optimizations")
         try:
             optimization_service = OptimizationService(self.db)
-            self.optimizations = optimization_service.get_all_optimizations()
-            self._show_optimizations_table()
-            self._show_optimization_details()
+            self.field_optimizations: list[Optimization] = optimization_service.get_field_optimizations()
+            self._show_field_optimizations_table()
+            self._show_wells_optimizations_table()
         finally:
             print("History of optimizations shown successfully.")
 
 
-    def _show_optimizations_table(self):
-        history_optimizations_data: list[dict] = [{
+    def _show_field_optimizations_table(self):
+        history_field_optimizations_data: list[dict] = [{
             "ID": opt.id,
             "Date": opt.execution_date.strftime("%Y-%m-%d %H:%M:%S"),
             "Plant": opt.plant_name,
@@ -32,12 +34,12 @@ class OptimizationHistoryComponent:
             "QGL Limit": opt.gas_injection_limit,
             "(USD/bbl)": opt.oil_price,
             "(USD/Mscf)": opt.gas_price
-        } for opt in self.optimizations]
+        } for opt in self.field_optimizations]
 
-        df_history_optimizations = pd.DataFrame(data=history_optimizations_data)
+        df_history_field_optimizations = pd.DataFrame(data=history_field_optimizations_data)
 
         st.dataframe(
-            df_history_optimizations.style.format({
+            df_history_field_optimizations.style.format({
                 "Total Production (bbl)": "{:.2f}",
                 "Total QGL (Mscf)": "{:.2f}",
                 "QGL Limit": "{:.2f}",
@@ -49,20 +51,23 @@ class OptimizationHistoryComponent:
         )
 
 
-    def _show_optimization_details(self):
+    def _show_wells_optimizations_table(self):
         selected_id = st.selectbox(
             "Select an optimization to view details",
-            options=[opt.id for opt in self.optimizations],
-            format_func=lambda x: f"optimization ID: {x} - {next((opt.plant_name for opt in self.optimizations if opt.id == x), '')}"
+            options=[opt.id for opt in self.field_optimizations],
+            format_func=lambda x: f"optimization ID: {x} - {next((opt.plant_name for opt in self.field_optimizations if opt.id == x), '')}"
         )
 
         if selected_id:
-            selected_optimization: Optimization = next((opt for opt in self.optimizations if opt.id == selected_id), None)
+            well_result_service = WellResultService(self.db)
+            selected_optimization: Optimization = next((opt for opt in self.field_optimizations if opt.id == selected_id), None)
+            self.wells_optimizations: list[WellResult] = well_result_service.get_wells_optimizations(selected_id)
+            
             
             if selected_optimization:
                 st.subheader(f"Detailed Results for Plant {selected_optimization.plant_name}")
 
-                display_constrained_results = DisplayConstrainedResults(selected_optimization, selected_optimization.well_results)
+                display_constrained_results = DisplayConstrainedResults(selected_optimization, self.wells_optimizations)
                 display_constrained_results._show_well_results_table()
                 st.warning("The behavior graphs are not available in the history yet...")
                 
@@ -71,7 +76,7 @@ class OptimizationHistoryComponent:
                     "Name": well.well_name,
                     "Production (bbl)": well.optimal_production,
                     "QGL (Mscf)": well.optimal_gas_injection
-                } for well in selected_optimization.well_results]).to_csv(index=False).encode('utf-8')
+                } for well in self.wells_optimizations]).to_csv(index=False).encode('utf-8')
                 
                 st.download_button(
                     label="Download results as CSV",
