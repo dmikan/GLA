@@ -81,7 +81,7 @@ if __name__ == "__main__":
     db = SnowflakeDB()
     #Optimization.create_table(db)
     optimization_service = OptimizationService(db)
-    results = optimization_service.get_all_optimizations()
+    results = optimization_service.get_field_optimizations()
     for result in results:
         print(result)
     
