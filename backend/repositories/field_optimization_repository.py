@@ -1,13 +1,13 @@
-from backend.entities.optimization import Optimization
+from backend.entities.field_optimization import FieldOptimization
 from backend.entities.database import SnowflakeDB
 from typing import Optional, List
 from datetime import datetime
     
-class OptimizationRepository:
+class FieldOptimizationRepository:
     def __init__(self, db: SnowflakeDB):
         self.db = db
 
-    def save(self, opt: Optimization) -> int:
+    def save(self, opt: FieldOptimization) -> int:
         id_query = "SELECT field_optimizations_id_seq.NEXTVAL"
         new_id = self.db.execute_query(id_query)[0]['NEXTVAL'] 
         query = """
@@ -32,18 +32,18 @@ class OptimizationRepository:
 
         
 
-    def find_latest(self) -> Optional[Optimization]:
+    def find_latest(self) -> Optional[FieldOptimization]:
         query = """
                 SELECT * FROM field_optimizations 
                 ORDER BY execution_date DESC 
                 LIMIT 1
             """
         result = self.db.execute_query(query)
-        return Optimization.from_dict(result[0]) if result else None
+        return FieldOptimization.from_dict(result[0]) if result else None
 
 
 
-    def find_all(self, limit: int = None) -> List[Optimization]:
+    def find_all(self, limit: int = None) -> List[FieldOptimization]:
         query = """
                 SELECT * FROM field_optimizations 
                 ORDER BY execution_date DESC
@@ -51,4 +51,4 @@ class OptimizationRepository:
         if limit is not None:
             query += f" LIMIT {limit}"     
         results = self.db.execute_query(query)
-        return [Optimization.from_dict(row) for row in results]
+        return [FieldOptimization.from_dict(row) for row in results]

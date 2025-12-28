@@ -6,10 +6,9 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import List
 
-from backend.entities.well_result import WellResult
 
 @dataclass
-class Optimization:
+class FieldOptimization:
     """Class representing optimization results"""
     id: int = None
     execution_date: datetime = datetime.now()
@@ -19,11 +18,7 @@ class Optimization:
     oil_price: float = 0.0  # Oil price per barrel (USD)
     gas_price: float = 0.0  # Gas price per unit (USD)
     field_name: str = ""  # Plant/field name
-    well_results: List['WellResult'] = None  # List of associated well results
 
-    def __post_init__(self):
-        if self.well_results is None:
-            self.well_results = []
 
 
     @classmethod    
@@ -50,7 +45,7 @@ class Optimization:
 
     @property
     def table_name(self) -> str:
-        return "optimizations"
+        return "field_optimizations"
 
     @classmethod 
     def to_dict(self) -> dict:
@@ -61,11 +56,11 @@ class Optimization:
             "gas_injection_limit": self.gas_injection_limit,
             "oil_price": self.oil_price,
             "gas_price": self.gas_price,
-            "plant_name": self.plant_name
+            "field_name": self.field_name
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Optimization':
+    def from_dict(cls, data: dict) -> 'FieldOptimization':
         """Create object from dictionary"""
         if not data:
             return None

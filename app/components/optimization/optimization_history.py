@@ -1,13 +1,13 @@
 import streamlit as st
 import pandas as pd
 from backend.entities.database import SnowflakeDB
-from backend.services.optimization_service import OptimizationService
-from backend.services.well_result_service import WellResultService
+from backend.services.field_optimization_service import FieldOptimizationService
+from backend.services.well_optimization_service import WellOptimizationService
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
-from backend.entities.optimization import Optimization
-from backend.repositories.optimization_repository import OptimizationRepository
-from backend.repositories.well_result_repository import WellResultRepository
-from backend.entities.well_result import WellResult
+from backend.entities.field_optimization import FieldOptimization
+from backend.repositories.field_optimization_repository import FieldOptimizationRepository
+from backend.repositories.well_optimization_repository import WellOptimizationRepository
+from backend.entities.well_optimization import WellOptimization
 
 
 class OptimizationHistoryComponent:
@@ -20,9 +20,9 @@ class OptimizationHistoryComponent:
     def show(self):
         st.subheader("History of optimizations")
         try:
-            optimization_repository = OptimizationRepository(self.db)
-            optimization_service = OptimizationService(optimization_repository)
-            self.field_optimizations: list[Optimization] = optimization_service.list_field_optimizations()
+            field_optimization_repository = FieldOptimizationRepository(self.db)
+            field_optimization_service = FieldOptimizationService(field_optimization_repository)
+            self.field_optimizations: list[FieldOptimization] = field_optimization_service.list_field_optimizations()
             self._show_field_optimizations_table()
             self._show_wells_optimizations_table()
         finally:
@@ -64,10 +64,10 @@ class OptimizationHistoryComponent:
         )
 
         if selected_id:
-            well_result_repository = WellResultRepository(self.db)
-            well_result_service = WellResultService(well_result_repository)
-            selected_optimization: Optimization = next((opt for opt in self.field_optimizations if opt.id == selected_id), None)
-            self.wells_optimizations: list[WellResult] = well_result_service.get_well_results_by_optimization(selected_id)
+            well_optimization_repository = WellOptimizationRepository(self.db)
+            well_optimization_service = WellOptimizationService(well_optimization_repository)
+            selected_optimization: FieldOptimization = next((opt for opt in self.field_optimizations if opt.id == selected_id), None)
+            self.wells_optimizations: list[WellOptimization] = well_optimization_service.get_well_optimizations_by_optimization(selected_id)
             
             
             if selected_optimization:

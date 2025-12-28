@@ -22,6 +22,7 @@
 12. kpi con diferencia de gas para alcanzar la produccion máxima (constrained) - generalizacion del kpi actual. (C)
 13. (criticidad baja) modelo mrp opcional actibable/desactivable. 
 14. dos casos de estudio: fisico y económico (usar varios pozos de los datos ya disponibles).
+15. convertir proper a clases.
 
 
 ideas:

@@ -1,10 +1,9 @@
-from backend.services.optimization_service import OptimizationService
-from backend.services.well_result_service import WellResultService
-from backend.entities.well_result import WellResult
-from backend.entities.optimization import Optimization
+from backend.services.field_optimization_service import FieldOptimizationService
+from backend.services.well_optimization_service import WellOptimizationService
+from backend.entities.field_optimization import FieldOptimization
 from backend.entities.database import SnowflakeDB
-from backend.repositories.optimization_repository import OptimizationRepository
-from backend.repositories.well_result_repository import WellResultRepository
+from backend.repositories.field_optimization_repository import FieldOptimizationRepository
+from backend.repositories.well_optimization_repository import WellOptimizationRepository
 #Orchestration pattern
 class SavingOrchestrationService:
     def __init__(self, db: SnowflakeDB):
@@ -19,24 +18,24 @@ class SavingOrchestrationService:
         #WellResult.create_table(self.db)
 
 
-        optimization_repository = OptimizationRepository(self.db)
-        well_result_repository = WellResultRepository(self.db)
-        optimization_service = OptimizationService(optimization_repository)
-        well_result_service = WellResultService(well_result_repository)
+        field_optimization_repository = FieldOptimizationRepository(self.db)
+        well_optimization_repository = WellOptimizationRepository(self.db)
+        field_optimization_service = FieldOptimizationService(field_optimization_repository)
+        well_optimization_service = WellOptimizationService(well_optimization_repository)
 
         # Create the optimization record passing the complete dictionary
-        opt_id = optimization_service.create_field_optimization(
+        opt_id = field_optimization_service.create_field_optimization(
             total_production=data["total_prod"],
             total_gas_injection=data["total_qgl"],
             gas_injection_limit=data.get("qgl_limit", 1000),
             oil_price=data.get("oil_price", 0.0),
             gas_price=data.get("gas_price", 0.0),
-            plant_name=str(data["info"][0])
+            field_name=str(data["info"][0])
         )
 
         # Create well results passing also the same dictionary
         for well in data["wells_data"]:
-            well_result_service.create_well_result(
+            well_optimization_service.create_well_optimization(
                 optimization_id=opt_id,
                 well_number=well["well_number"], 
                 well_name=well["well_name"], 

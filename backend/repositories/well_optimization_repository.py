@@ -1,13 +1,13 @@
-from backend.entities.well_result import WellResult
+from backend.entities.well_optimization import WellOptimization
 from backend.entities.database import SnowflakeDB
 from typing import List
 
-class WellResultRepository:
+class WellOptimizationRepository:
     def __init__(self, db: SnowflakeDB):
         self.db = db
 
-    def save(self, result: WellResult) -> bool:
-        """Save a WellResult entity"""
+    def save(self, result: WellOptimization) -> bool:
+        """Save a WellOptimization entity"""
         query = """
         INSERT INTO well_optimizations (
             field_optimization_id, well_number, well_name,
@@ -27,16 +27,16 @@ class WellResultRepository:
         except Exception as e:
             raise e
 
-    def find_by_optimization_id(self, opt_id: int) -> List[WellResult]:
+    def find_by_optimization_id(self, opt_id: int) -> List[WellOptimization]:
         query = """
             SELECT * FROM well_optimizations 
             WHERE field_optimization_id = %s
             """
         results = self.db.execute_query(query, (opt_id,))
-        return [WellResult.from_dict(row) for row in results]
+        return [WellOptimization.from_dict(row) for row in results]
 
 
-    def find_latest(self, limit: int = None) -> List[WellResult]:
+    def find_latest(self, limit: int = None) -> List[WellOptimization]:
         query = """
             SELECT w.*, o.execution_date 
             FROM well_optimizations w
@@ -51,4 +51,4 @@ class WellResultRepository:
         if limit:
             query += f" LIMIT {limit}"
         results = self.db.execute_query(query)
-        return [WellResult.from_dict(row) for row in results]
+        return [WellOptimization.from_dict(row) for row in results]
