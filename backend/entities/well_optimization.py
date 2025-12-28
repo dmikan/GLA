@@ -5,7 +5,7 @@ Well Result Entity
 from dataclasses import dataclass
 
 @dataclass
-class WellResult:
+class WellOptimization:
     """Class representing well-specific optimization results"""
     id: int = None
     optimization_id: int = None
@@ -16,7 +16,7 @@ class WellResult:
 
     @property
     def table_name(self) -> str:
-        return "well_results"
+        return "well_optimizations"
 
     def to_dict(self) -> dict:
         """Convert object to dictionary for database operations"""
@@ -48,7 +48,7 @@ class WellResult:
             db.execute(query)        
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'WellResult':
+    def from_dict(cls, data: dict) -> 'WellOptimization':
         """Create object from dictionary"""
         data = {k.lower(): v for k, v in data.items()}  
         return cls(

@@ -1,12 +1,14 @@
 import streamlit as st
 from backend.entities.database import SnowflakeDB
-from backend.services.optimization_service import OptimizationService
+from backend.services.field_optimization_service import FieldOptimizationService
 from backend.services.optimization_global_pipeline_service import OptimizationGlobalPipelineService
 from backend.services.optimization_constrained_pipeline_service import OptimizationConstrainedPipelineService
 from app.components.optimization.display_global_results import DisplayGlobalResults
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
 from backend.services.fitting_service import FittingService
-from backend.services.well_result_service import WellResultService
+from backend.services.well_optimization_service import WellOptimizationService
+from backend.repositories.field_optimization_repository import FieldOptimizationRepository
+from backend.repositories.well_optimization_repository import WellOptimizationRepository
 
 class OptimizationExecutionComponent:
     def __init__(self, db: SnowflakeDB):
@@ -31,9 +33,10 @@ class OptimizationExecutionComponent:
                     fitting_service = FittingService(q_gl_list, q_fluid_list, wct_list)
                     fit = fitting_service.perform_fitting_group()
 
-                    optimization_service = OptimizationService(self.db)
+                    field_optimization_repository = FieldOptimizationRepository(self.db)
+                    field_optimization_service = FieldOptimizationService(field_optimization_repository)
                     plant_name = list_info[0] if list_info else "Unknown Plant"
-                    optimization = optimization_service.get_latest()
+                    optimization = field_optimization_service.get_latest_field_optimization()
 
                     st.subheader(f"Global optimization curve: {plant_name}")
                     st.info("Calculating global optimization curve...")
@@ -101,8 +104,9 @@ class OptimizationExecutionComponent:
                     
                     st.success("Constrained optimization completed!")
 
-                    well_result_service = WellResultService(self.db)
-                    well_results = well_result_service.get_latest_well_results()
+                    well_optimization_repository = WellOptimizationRepository(self.db)
+                    well_optimization_service = WellOptimizationService(well_optimization_repository)
+                    well_results = well_optimization_service.get_latest_well_optimizations()
                     
                     # Save WELL results in session_state
                     st.session_state[self.SESSION_KEY_WELL] = well_results

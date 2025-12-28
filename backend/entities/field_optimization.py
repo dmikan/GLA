@@ -6,10 +6,9 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import List
 
-from backend.entities.well_result import WellResult
 
 @dataclass
-class Optimization:
+class FieldOptimization:
     """Class representing optimization results"""
     id: int = None
     execution_date: datetime = datetime.now()
@@ -18,15 +17,11 @@ class Optimization:
     gas_injection_limit: float = 0.0  # Gas injection limit (MSCF/D)
     oil_price: float = 0.0  # Oil price per barrel (USD)
     gas_price: float = 0.0  # Gas price per unit (USD)
-    plant_name: str = ""  # Plant/field name
-    well_results: List['WellResult'] = None  # List of associated well results
-
-    def __post_init__(self):
-        if self.well_results is None:
-            self.well_results = []
+    field_name: str = ""  # Plant/field name
 
 
-    @classmethod
+
+    @classmethod    
     def create_table(cls, db):
         """Create table and sequence for this entity"""
         queries = [
@@ -40,7 +35,7 @@ class Optimization:
                 gas_injection_limit FLOAT,
                 oil_price FLOAT,
                 gas_price FLOAT,
-                plant_name VARCHAR(100),
+                field_name VARCHAR(100),
                 source_file VARCHAR(255)
             )
             """
@@ -50,7 +45,7 @@ class Optimization:
 
     @property
     def table_name(self) -> str:
-        return "optimizations"
+        return "field_optimizations"
 
     @classmethod 
     def to_dict(self) -> dict:
@@ -61,11 +56,11 @@ class Optimization:
             "gas_injection_limit": self.gas_injection_limit,
             "oil_price": self.oil_price,
             "gas_price": self.gas_price,
-            "plant_name": self.plant_name
+            "field_name": self.field_name
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Optimization':
+    def from_dict(cls, data: dict) -> 'FieldOptimization':
         """Create object from dictionary"""
         if not data:
             return None
@@ -79,5 +74,5 @@ class Optimization:
             gas_injection_limit=data.get('gas_injection_limit', 0.0),
             oil_price=data.get('oil_price', 0.0),
             gas_price=data.get('gas_price', 0.0),
-            plant_name=data.get('plant_name', '')
+            field_name=data.get('field_name', '')
         )
