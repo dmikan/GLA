@@ -7,6 +7,8 @@ from app.components.optimization.display_global_results import DisplayGlobalResu
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
 from backend.services.fitting_service import FittingService
 from backend.services.well_result_service import WellResultService
+from backend.repositories.optimization_repository import OptimizationRepository
+from backend.repositories.well_result_repository import WellResultRepository
 
 class OptimizationExecutionComponent:
     def __init__(self, db: SnowflakeDB):
@@ -31,9 +33,10 @@ class OptimizationExecutionComponent:
                     fitting_service = FittingService(q_gl_list, q_fluid_list, wct_list)
                     fit = fitting_service.perform_fitting_group()
 
-                    optimization_service = OptimizationService(self.db)
+                    optimization_repository = OptimizationRepository(self.db)
+                    optimization_service = OptimizationService(optimization_repository)
                     plant_name = list_info[0] if list_info else "Unknown Plant"
-                    optimization = optimization_service.get_latest()
+                    optimization = optimization_service.get_latest_field_optimization()
 
                     st.subheader(f"Global optimization curve: {plant_name}")
                     st.info("Calculating global optimization curve...")
@@ -101,7 +104,8 @@ class OptimizationExecutionComponent:
                     
                     st.success("Constrained optimization completed!")
 
-                    well_result_service = WellResultService(self.db)
+                    well_result_repository = WellResultRepository(self.db)
+                    well_result_service = WellResultService(well_result_repository)
                     well_results = well_result_service.get_latest_well_results()
                     
                     # Save WELL results in session_state

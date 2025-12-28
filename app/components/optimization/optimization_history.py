@@ -5,6 +5,10 @@ from backend.services.optimization_service import OptimizationService
 from backend.services.well_result_service import WellResultService
 from app.components.optimization.display_constrained_results import DisplayConstrainedResults
 from backend.entities.optimization import Optimization
+from backend.repositories.optimization_repository import OptimizationRepository
+from backend.repositories.well_result_repository import WellResultRepository
+from backend.entities.well_result import WellResult
+
 
 class OptimizationHistoryComponent:
     def __init__(self, db: SnowflakeDB):
@@ -16,8 +20,9 @@ class OptimizationHistoryComponent:
     def show(self):
         st.subheader("History of optimizations")
         try:
-            optimization_service = OptimizationService(self.db)
-            self.field_optimizations: list[Optimization] = optimization_service.get_field_optimizations()
+            optimization_repository = OptimizationRepository(self.db)
+            optimization_service = OptimizationService(optimization_repository)
+            self.field_optimizations: list[Optimization] = optimization_service.list_field_optimizations()
             self._show_field_optimizations_table()
             self._show_wells_optimizations_table()
         finally:
@@ -28,7 +33,7 @@ class OptimizationHistoryComponent:
         history_field_optimizations_data: list[dict] = [{
             "ID": opt.id,
             "Date": opt.execution_date.strftime("%Y-%m-%d %H:%M:%S"),
-            "Plant": opt.plant_name,
+            "Field": opt.field_name,
             "Total Production (bbl)": opt.total_production,
             "Total QGL (Mscf)": opt.total_gas_injection,
             "QGL Limit": opt.gas_injection_limit,
@@ -55,17 +60,18 @@ class OptimizationHistoryComponent:
         selected_id = st.selectbox(
             "Select an optimization to view details",
             options=[opt.id for opt in self.field_optimizations],
-            format_func=lambda x: f"optimization ID: {x} - {next((opt.plant_name for opt in self.field_optimizations if opt.id == x), '')}"
+            format_func=lambda x: f"optimization ID: {x} - {next((opt.field_name for opt in self.field_optimizations if opt.id == x), '')}"
         )
 
         if selected_id:
-            well_result_service = WellResultService(self.db)
+            well_result_repository = WellResultRepository(self.db)
+            well_result_service = WellResultService(well_result_repository)
             selected_optimization: Optimization = next((opt for opt in self.field_optimizations if opt.id == selected_id), None)
-            self.wells_optimizations: list[WellResult] = well_result_service.get_wells_optimizations(selected_id)
+            self.wells_optimizations: list[WellResult] = well_result_service.get_well_results_by_optimization(selected_id)
             
             
             if selected_optimization:
-                st.subheader(f"Detailed Results for Plant {selected_optimization.plant_name}")
+                st.subheader(f"Detailed Results for Field {selected_optimization.field_name}")
 
                 display_constrained_results = DisplayConstrainedResults(selected_optimization, self.wells_optimizations)
                 display_constrained_results._show_well_results_table()

@@ -18,7 +18,7 @@ class Optimization:
     gas_injection_limit: float = 0.0  # Gas injection limit (MSCF/D)
     oil_price: float = 0.0  # Oil price per barrel (USD)
     gas_price: float = 0.0  # Gas price per unit (USD)
-    plant_name: str = ""  # Plant/field name
+    field_name: str = ""  # Plant/field name
     well_results: List['WellResult'] = None  # List of associated well results
 
     def __post_init__(self):
@@ -26,7 +26,7 @@ class Optimization:
             self.well_results = []
 
 
-    @classmethod
+    @classmethod    
     def create_table(cls, db):
         """Create table and sequence for this entity"""
         queries = [
@@ -40,7 +40,7 @@ class Optimization:
                 gas_injection_limit FLOAT,
                 oil_price FLOAT,
                 gas_price FLOAT,
-                plant_name VARCHAR(100),
+                field_name VARCHAR(100),
                 source_file VARCHAR(255)
             )
             """
@@ -79,5 +79,5 @@ class Optimization:
             gas_injection_limit=data.get('gas_injection_limit', 0.0),
             oil_price=data.get('oil_price', 0.0),
             gas_price=data.get('gas_price', 0.0),
-            plant_name=data.get('plant_name', '')
+            field_name=data.get('field_name', '')
         )

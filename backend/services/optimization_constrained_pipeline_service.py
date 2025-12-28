@@ -113,7 +113,7 @@ class OptimizationConstrainedPipelineService:
             "gas_price": self.p_qgl
         }
         result_service = SavingOrchestrationService(self.db)
-        result_service.save_optimization_results(data)
+        result_service.save_constrained_optimization_results(data)
 
 
         return {
