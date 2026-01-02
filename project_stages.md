@@ -24,6 +24,9 @@
 14. dos casos de estudio: fisico y económico (usar varios pozos de los datos ya disponibles).
 15. convertir proper a clases.
 
+16. it is not necessart to call the database to get the well optimization results
+DisplayConstrainedResults just requires the optimization results (just one parameter)
+
 
 ideas:
 - (actualización tab2) visualizar las pruebas y trazar las curvas de performance (incluyendo en color la fecha). parametro: rango de fechas y ver los datos de lso diferentes pozos.  
