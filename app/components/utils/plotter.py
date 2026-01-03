@@ -111,6 +111,11 @@ class Plotter:
             row = (idx // 3) + 1
             col = (idx % 3) + 1
             
+            optimal_qgl = well_result.optimal_gas_injection
+            optimal_prod = well_result.optimal_production
+            optimal_index = list(well_data["q_gl_common_range"]).index(optimal_qgl)
+            optimal_fluid = list(well_data["q_fluid_predicted"])[optimal_index]
+
             fig_prod.add_trace(
                 go.Scatter(
                     x=well_data["q_gl_common_range"],
@@ -136,7 +141,6 @@ class Plotter:
                 ),
                 row=row, col=col
             )
-            
             
             fig_prod.add_trace(
                 go.Scatter(
@@ -169,13 +173,10 @@ class Plotter:
                 row=row, col=col
             )
             
-            optimal_qgl = well_result.optimal_gas_injection
-            optimal_prod = well_result.optimal_production
-            
             fig_prod.add_trace(
                 go.Scatter(
                     x=[optimal_qgl, optimal_qgl],
-                    y=[0, optimal_prod],
+                    y=[0, optimal_fluid],
                     mode='lines',
                     name='Optimal QGL',
                     line=dict(color=self.optimal_line_color, width=2, dash='dash'),
@@ -190,7 +191,7 @@ class Plotter:
                     x=[optimal_qgl],
                     y=[optimal_prod],
                     mode='markers',
-                    name='Optimal Point',
+                    name='Optimal Oil Point',
                     marker=dict(
                         color=self.optimal_line_color, 
                         size=10, 
@@ -198,6 +199,23 @@ class Plotter:
                     ),
                     showlegend=True if idx == 0 else False,
                     legendgroup='group6'
+                ),
+                row=row, col=col
+            )
+
+            fig_prod.add_trace(
+                go.Scatter(
+                    x=[optimal_qgl],
+                    y=[optimal_fluid],
+                    mode='markers',
+                    name='Optimal Fluid Point',
+                    marker=dict(
+                        color=self.optimal_line_color, 
+                        size=10, 
+                        symbol='x'
+                    ),
+                    showlegend=True if idx == 0 else False,
+                    legendgroup='group7'
                 ),
                 row=row, col=col
             )
