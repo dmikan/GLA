@@ -261,7 +261,7 @@ class Plotter:
             )
 
             fig_prod.update_xaxes(
-                title_text="Gas Injection (q_gl)",
+                title_text="Gas lift rate (mscfd)",
                 row=row, col=col,
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
@@ -272,7 +272,7 @@ class Plotter:
             )
 
             fig_prod.update_yaxes(
-                title_text="Oil Production (bbl/d)",
+                title_text="Fluid/Oil rate (bfpd/bopd)",
                 row=row, col=col,
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
