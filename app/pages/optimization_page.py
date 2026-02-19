@@ -13,6 +13,9 @@ class OptimizationPage:
         self.file_upload = FileUploadComponent()
 
     def show(self):
+        '''
+        Displays the optimisation GUI with optimisation settings
+        '''
         optimization_settings = OptimizationSettingsComponent()
         optimization_execution = OptimizationExecutionComponent(self.db)
         optimization_history = OptimizationHistoryComponent(self.db)

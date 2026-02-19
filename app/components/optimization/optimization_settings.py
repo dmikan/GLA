@@ -6,32 +6,33 @@ from app.components.optimization.display_global_results import DisplayGlobalResu
 
 class OptimizationSettingsComponent:
     def __init__(self):
-        self.qgl_min_global = 300
-        self.p_qoil_global = 70.0
-        self.p_qgl_global = 300.0
-        self.qgl_limit_constrained = 1000
-        self.qgl_min_constrained = 300
-        self.p_qoil_constrained = 70.0
-        self.p_qgl_constrained = 300.0
-        self.SESSION_KEY_GLOBAL = "global_optimization_results"
-        self.SESSION_KEY_CONSTR = "constrained_optimization_results"
-        self.SESSION_KEY_WELL = "well_results"
+        self.qgl_min_global: float # min qgl to a well in global optimisation
+        self.p_qoil_global: float # oil price
+        self.p_qgl_global: float # gas cost
+        self.qgl_limit_constrained: float # available gas
+        self.qgl_min_constrained: float # min qgl in by well optimisation
+        self.p_qoil_constrained: float # oil price by well optim
+        self.p_qgl_constrained: float # gas cost by well optim
 
-    '''
-    Method to show the global optimization.
-    Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
-    '''
+        #self.SESSION_KEY_GLOBAL = "global_optimization_results"
+        #self.SESSION_KEY_CONSTR = "constrained_optimization_results"
+        #self.SESSION_KEY_WELL = "well_results"
+
+
     def choose_global_settings(self):
-        
+        '''
+        Interface to allow the user to set global optimisation settings: oil price,
+        gas cost, min qgl to allocate to a well.
+        '''
         with st.expander("Global Optimization Configuration", expanded=True):
 
-            row1_col1, row1_col2 = st.columns(2)
+            row1_col1, row1_col2 = st.columns(2) # widgets in two columns
             with row1_col1:
                 self.p_qoil_global = st.number_input(
                     "Oil price (USD/bbl)",
                     min_value=0.1,
                     max_value=None,
-                    value=100.0,
+                    value=60.0,
                     step=1.0,
                     key="p_qoil_global"
                 )
@@ -50,7 +51,7 @@ class OptimizationSettingsComponent:
 
             with row2_col1:
                 self.qgl_min_global = st.number_input(
-                    "Minimum QGL limit (Mscf)",
+                    "Minimum QGL to allocate (Mscf)",
                     min_value=0.1,
                     max_value=None,
                     value=1.0,
