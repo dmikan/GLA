@@ -135,69 +135,62 @@ class ManualInputComponent:
         return True
 
 
-
-
-    def _manual_input_persistence(self):
-        """
-        Persist the manual input data to a CSV file.
-        """ 
-        if self.final_df is not None and not self.final_df.empty:
-            df = self.final_df
-            field_name = df.iloc[2, 0] if len(df) > 2 and not pd.isna(df.iloc[2, 0]) else "manual_data"
-            temp_path = self.tmp_dir / f"data_{field_name.lower().replace(' ', '_')}.csv"
-            
-            try:
-                df.to_csv(temp_path, index=False, header=False) 
-                st.success("Data saved successfully.")
-                st.session_state.data_load_mode = "manual_input"
-                st.session_state.temp_path = temp_path
-                return True
-            except Exception as e:
-                st.error(f"Error saving data: {e}")
-
-        return True 
-
-
-
     def _build_dataframe_to_optimizer(self):
-        """
-        Build the final dataframe in the correct format including the index column.
-        """
-        prod_df = self.filled_injection_production_df
-        num_prod_cols = len(prod_df.columns)
-        total_columns = num_prod_cols + 1  # +1 por la columna 'index'
+        try:
+            total_columns = len(self.filled_injection_production_df.columns) + 1
+            self.final_df = pd.DataFrame(columns=range(total_columns))
 
-        # Create DataFrame final with the correct size
-        self.final_df = pd.DataFrame(columns=range(total_columns), index=range(5 + len(prod_df)))
+            # Row 0: description
+            self.final_df.loc[0] = ["description"] + [""] * (total_columns - 1)
 
-        # Row 0: Description
-        self.final_df.loc[0] = ["description"] + [""] * (total_columns - 1)
+            # Row 1: well headers
+            wells_header = self.filled_field_wells_df.columns.tolist()
+            wells_header += [""] * (total_columns - len(wells_header))
+            self.final_df.loc[1] = wells_header
 
-        # Row 1: Field/Well Names
-        wells_header = self.filled_field_wells_df.columns.tolist()
-        wells_header += [""] * (total_columns - len(wells_header))
-        self.final_df.loc[1] = wells_header
-
-        # Row 2: Field/Well Values
-        if self.filled_field_wells_df is not None and not self.filled_field_wells_df.empty:
+            # Row 2: well values
             wells_values = self.filled_field_wells_df.iloc[0].tolist()
             wells_values += [""] * (total_columns - len(wells_values))
             self.final_df.loc[2] = wells_values
 
-        # Row 3: WCT Values
-        if self.filled_wct_df is not None and not self.filled_wct_df.empty:
+            # Row 3: wct values
             wct_values = ["wct"] + self.filled_wct_df.iloc[0].tolist()
             wct_values += [""] * (total_columns - len(wct_values))
             self.final_df.loc[3] = wct_values
 
-        # Row 4: Data Headers (includes 'index')
-        data_headers = ["index"] + prod_df.columns.tolist()
-        self.final_df.loc[4] = data_headers
+            # Row 4: data headers
+            data_headers = ["index"] + self.filled_injection_production_df.columns.tolist()
+            self.final_df.loc[4] = data_headers
 
-        # Following rows: Production Data with their index
-        for i, (idx, row) in enumerate(prod_df.iterrows()):
-            row_values = [idx] + row.tolist()
-            self.final_df.loc[5 + i] = row_values
+            # Following rows: production data
+            for i, (idx, row) in enumerate(self.filled_injection_production_df.iterrows()):
+                row_values = [idx + 1] + row.tolist()
+                self.final_df.loc[5 + i] = row_values
 
-        return True
+            return True
+        except Exception as e:
+            st.error(f"Error building the final DataFrame: {e}")
+            return False
+
+    def _manual_input_persistence(self):
+        try:
+            if self.final_df is not None and not self.final_df.empty and len(self.final_df) > 2:
+                df = self.final_df
+                field_name = df.iloc[2, 0] if not pd.isna(df.iloc[2, 0]) else "manual_data"
+                temp_path = self.tmp_dir / f"data_{field_name.lower().replace(' ', '_')}.csv"
+                df.to_csv(temp_path, index=False, header=False)
+                st.success(f"Data saved in {temp_path}")
+                st.session_state.data_load_mode = "manual_input"
+                st.session_state.temp_path = temp_path
+                return True
+            else:
+                st.warning("Not enough data to save.")
+                return False
+        except Exception as e:
+            st.error(f"Error saving the data: {e}")
+            return False
+
+
+
+
 
