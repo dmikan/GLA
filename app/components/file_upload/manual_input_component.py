@@ -78,6 +78,24 @@ class ManualInputComponent:
             columns=self.injection_production_labels,
             index=range(1, self.num_rows + 1)
         )
+
+
+        if  st.session_state.get('field_wells_df') is not None:
+            self.field_wells_df[st.session_state.field_wells_df.columns] = st.session_state.field_wells_df
+        if  st.session_state.get('wct_df') is not None:
+            self.field_wells_df[st.session_state.wct_df.columns] = st.session_state.wct_df
+        if  st.session_state.get('injection_production_df') is not None:    
+            self.field_wells_df[st.session_state.injection_production_df.columns] = st.session_state.injection_production_df
+
+
+        if st.session_state.get('field_wells_df') is None:
+            st.session_state.field_wells_df = self.field_wells_df
+        if st.session_state.get('wct_df') is None:
+            st.session_state.wct_df = self.wct_df
+        if st.session_state.get('injection_production_df') is None:
+            st.session_state.injection_production_df = self.injection_production_df
+
+            
         return True
 
 
@@ -93,7 +111,7 @@ class ManualInputComponent:
         info_header.update({col: st.column_config.TextColumn(f"🛢️ {col.replace('_', ' ').title()}") for col in self.field_wells_labels[1:]})
 
         self.filled_field_wells_df = st.data_editor(
-            self.field_wells_df,
+            st.session_state.field_wells_df,
             column_config=info_header, 
             num_rows="fixed",
             hide_index=True, 
@@ -108,7 +126,7 @@ class ManualInputComponent:
         
         wct_header = {col: st.column_config.TextColumn(f"📉 {col.replace('_', ' ')}") for col in self.wct_labels}
         self.filled_wct_df = st.data_editor(
-            self.wct_df,
+            st.session_state.wct_df,
             column_config=wct_header, 
             num_rows="fixed",
             hide_index=True, 
@@ -124,7 +142,7 @@ class ManualInputComponent:
         prod_header = {col: st.column_config.TextColumn(f"{col.replace('_', ' ')}") for col in self.injection_production_labels}
         
         self.filled_injection_production_df = st.data_editor(
-            self.injection_production_df,
+            st.session_state.injection_production_df, # has to be dependent of the session state
             column_config=prod_header,  
             num_rows="fixed",
             hide_index=True,
@@ -132,6 +150,10 @@ class ManualInputComponent:
             key="prod_editor"
         )
 
+        st.session_state.filled_field_wells_df = self.filled_field_wells_df
+        st.session_state.filled_wct_df = self.filled_wct_df
+        st.session_state.filled_injection_production_df = self.filled_injection_production_df
+        
         return True
 
 
