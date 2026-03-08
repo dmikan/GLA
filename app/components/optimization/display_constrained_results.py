@@ -16,15 +16,24 @@ class DisplayConstrainedResults:
     '''
     def show(self):
         inject_global_css()
+        st.markdown("---")
+        self.show_summary_metrics()
+        st.markdown("---")
+        self.show_production_curves()
+        st.markdown("---")
+        self.show_detailed_results_by_well()
 
-        st.markdown("---")
-        st.subheader("Summary Metrics")
+    def show_summary_metrics(self):
+        inject_global_css()
+        #st.markdown("#### Summary Metrics")
         self._show_summary_metrics()
-        st.markdown("---")
-        st.subheader("Production Curves")
+
+    def show_production_curves(self):
+        #st.markdown("#### Production Curves")
         self._plot_well_curves()
-        st.markdown("---")
-        st.subheader("Detailed Results by Well")
+
+    def show_detailed_results_by_well(self):
+        #st.markdown("#### Detailed Results by Well")
         self._show_well_results_table()
 
     '''
@@ -34,40 +43,27 @@ class DisplayConstrainedResults:
     '''
     
     def _show_summary_metrics(self):
-        col1, col2, col3 = st.columns(3)
         summary = self.optimization_results['summary']
         used_percentage = (summary['total_qgl'] / summary['qgl_limit']) * 100
 
-        # Card 1: Total Production
-        with col1:
-            html = f"""
+        html = f"""
+        <div class="metric-cards-vertical">
             <div class="metric-card">
                 <div class="metric-title">Total Production</div>
                 <div class="metric-value">{summary['total_production']:.2f} <span class="metric-unit">bbl</span></div>
             </div>
-            """
-            st.markdown(html, unsafe_allow_html=True)
-
-        # Card 2: Total QGL Used (with status tag)
-        with col2:
-            html = f"""
             <div class="metric-card">
                 <div class="metric-title">Total QGL Used</div>
                 <div class="metric-value">{summary['total_qgl']:.2f} <span class="metric-unit">Mscf</span></div>
                 <div class="status-tag">{used_percentage:.1f}% of the limit</div>
             </div>
-            """
-            st.markdown(html, unsafe_allow_html=True)
-
-        # Card 3: Configured QGL Limit
-        with col3:
-            html = f"""
             <div class="metric-card">
                 <div class="metric-title">Configured QGL Limit</div>
                 <div class="metric-value">{summary['qgl_limit']:.2f} <span class="metric-unit">Mscf</span></div>
             </div>
-            """
-            st.markdown(html, unsafe_allow_html=True)
+        </div>
+        """
+        st.markdown(html, unsafe_allow_html=True)
 
 
 
@@ -90,8 +86,8 @@ class DisplayConstrainedResults:
         try:
             well_data = [{
                 "Well": getattr(result, 'well_name', 'N/A'),
-                "Production": getattr(result, 'optimal_production', 0),
-                "QGL": getattr(result, 'optimal_gas_injection', 0)
+                "Qgl": getattr(result, 'optimal_gas_injection', 0),
+                "Oil": getattr(result, 'optimal_production', 0)
             } for result in self.well_results]
 
             df = pd.DataFrame(well_data)
@@ -100,8 +96,8 @@ class DisplayConstrainedResults:
                 df = df.rename(columns={"well_name": "Well"})
 
             st.dataframe(df.set_index("Well").style.format({
-                "Production": "{:.2f}",
-                "QGL": "{:.2f}"
+                "Qgl": "{:.0f}",
+                "Oil": "{:.0f}"
             }))
 
         except Exception as e:

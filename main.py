@@ -11,7 +11,7 @@ from app.styles.custom_styles import inject_global_css
 def main():
     # Configuration
     inject_global_css()
-    st.set_page_config(page_title="Gas Lift Allocation Optimizer")
+    st.set_page_config(page_title="Gas Lift Allocation Optimizer", layout="wide")
     st.title("🛢️ Gas Lift Allocation Optimizer")
 
     # --- Tabs ---

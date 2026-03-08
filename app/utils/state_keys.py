@@ -3,6 +3,7 @@ class StateKeys:
     SESSION_KEY_GLOBAL = "global_optimization_results"
     SESSION_KEY_CONSTR = "constrained_optimization_results"
     SESSION_KEY_WELL = "well_results"
+    SESSION_KEY_LAST_OPTIMIZATION_TAB = "_last_optimization_tab"
     SESSION_KEY_UPLOADED_FILE = "uploaded_file"
     SESSION_KEY_TEMP_PATH = "temp_path"
     SESSION_KEY_DATA_LOAD_MODE = "data_load_mode"

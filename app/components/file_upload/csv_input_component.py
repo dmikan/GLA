@@ -3,10 +3,11 @@ import pandas as pd
 from io import StringIO
 from app.styles.custom_styles import inject_global_css
 from app.utils.state_keys import StateKeys
+from pathlib import Path
 
 
 class CSVInputComponent:
-    def __init__(self, tmp_dir):
+    def __init__(self, tmp_dir: Path):
         self.tmp_dir = tmp_dir
         self.up_file = None
 

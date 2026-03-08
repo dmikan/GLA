@@ -14,7 +14,7 @@ class FileUploadComponent:
     def show(self):
         """Show the file upload component."""
         self._init_session_state()
-        tmp_dir = self._get_tmp_dir()
+        tmp_dir: Path = self._get_tmp_dir()
         tab1, tab2, _ = self._choose_data_loading_method()
 
         with tab1:
@@ -40,7 +40,7 @@ class FileUploadComponent:
 
 
 
-    def _get_tmp_dir(self):
+    def _get_tmp_dir(self) -> Path:
         """Get the temporary directory for storing uploaded files."""
         is_snowflake = os.path.exists("/home/udf")
         if is_snowflake:

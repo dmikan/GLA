@@ -5,7 +5,7 @@ from math import ceil
 
 class Plotter:
     def __init__(self, optimization_results: dict):
-        self.bg_color = "#0E1117"
+        self.bg_color = "#22272e"
         self.grid_color = "#37474F"
         self.text_color = "#FFFFFF"
         self.line_color = "#00E676"
@@ -94,17 +94,17 @@ class Plotter:
     def create_well_curves(self, well_results):
         cols = 3
         rows = int(ceil(len(well_results) / cols))
-        PLOT_HEIGHT = 400 * rows
+        PLOT_HEIGHT = 350 * rows
         VERTICAL_SPACING = 0.5 / rows
         MARGIN_TOP_PX = 140
         MARGIN_BOTTOM_PX = 80
 
         fig_prod = make_subplots(
             cols=cols,
-            rows = rows,
-            subplot_titles=[f"Well {well.well_name}" for well in well_results],
-            horizontal_spacing=0.12,
-            vertical_spacing=VERTICAL_SPACING
+            rows=rows,
+            subplot_titles=[f"{well.well_name}" for well in well_results],
+            horizontal_spacing=0.08,
+            vertical_spacing=VERTICAL_SPACING,
         )
 
         for idx, (well_data, well_result) in enumerate(zip(self.optimization_results['plot_data'], well_results)):
@@ -129,7 +129,8 @@ class Plotter:
                     name='Adjusted Fluid Curve',
                     line=dict(width=3, color=self.fluid_line_color),
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group1'
+                    legendgroup='group1',
+                    hovertemplate="QGL: %{x:.0f} mscfd<br>Fluid: %{y:.1f} bfpd<extra></extra>",
                 ),
                 row=row, col=col
             )
@@ -142,7 +143,8 @@ class Plotter:
                     name='Adjusted Oil Curve',
                     line=dict(width=3, color=self.line_color),
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group2'
+                    legendgroup='group2',
+                    hovertemplate="QGL: %{x:.0f} mscfd<br>Oil: %{y:.1f} bopd<extra></extra>",
                 ),
                 row=row, col=col
             )
@@ -260,26 +262,28 @@ class Plotter:
                 row=row, col=col
             )
 
+            # Axis labels only on bottom row (x) and left column (y) to avoid repetition
+            x_title = "Gas lift rate (mscfd)" if row == rows else None
+            y_title = "Fluid/Oil rate (bfpd/bopd)" if col == 1 else None
             fig_prod.update_xaxes(
-                title_text="Gas lift rate (mscfd)",
+                title_text=x_title,
                 row=row, col=col,
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
                 tickfont=dict(color=self.text_color),
                 title_font=dict(color=self.text_color),
                 showline=True,
-                mirror=True
+                mirror=True,
             )
-
             fig_prod.update_yaxes(
-                title_text="Fluid/Oil rate (bfpd/bopd)",
+                title_text=y_title,
                 row=row, col=col,
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
                 tickfont=dict(color=self.text_color),
                 title_font=dict(color=self.text_color),
                 showline=True,
-                mirror=True
+                mirror=True,
             )
 
         fig_prod.update_layout(
@@ -295,7 +299,7 @@ class Plotter:
                 t=MARGIN_TOP_PX,
                 pad=4
             ),
-            legend=dict(
+            legend=dict(    
                 orientation="h",
                 yanchor="bottom",
                 y=1.2,
@@ -304,6 +308,7 @@ class Plotter:
                 font=dict(color=self.text_color)
             ),
         )
+        # Slightly more space between subplot titles and the plots
+        for i in range(len(well_results)):
+            fig_prod.layout.annotations[i].y += 0.025
         return fig_prod
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)

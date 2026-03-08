@@ -4,6 +4,8 @@ from app.components.file_upload.file_upload_component import FileUploadComponent
 from app.components.optimization.optimization_settings import OptimizationSettingsComponent
 from app.components.optimization.optimization_history import OptimizationHistoryComponent
 from app.components.optimization.optimization_execution import OptimizationExecutionComponent
+from app.components.optimization.display_constrained_results import DisplayConstrainedResults
+from app.components.optimization.display_global_results import DisplayGlobalResults
 from backend.entities.database import SnowflakeDB
 from backend.services.data_loader_service import DataLoader
 from app.utils.state_keys import StateKeys
@@ -22,16 +24,74 @@ class OptimizationPage:
         This method is called by the app to show the optimization page.
         It is called once when the user navigates to the optimization page.
         """
-        self.file_upload.show()
-        temp_path = st.session_state[StateKeys.SESSION_KEY_TEMP_PATH]
-        load_mode = st.session_state[StateKeys.SESSION_KEY_DATA_LOAD_MODE]
-        is_data_ready = temp_path is not None and Path(temp_path).exists()
-        loader = DataLoader(temp_path)
-        if is_data_ready and self.loaded_data is None:
-            self.loaded_data = loader.load_data()
-        st.divider()
-        self._show_tabs(is_data_ready)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Data loading")
+            self.file_upload.show()
 
+        # Recompute after file_upload.show() so we pick up temp_path set in this run
+        temp_path = st.session_state.get(StateKeys.SESSION_KEY_TEMP_PATH)
+        is_data_ready = temp_path is not None and Path(temp_path).exists()
+        if is_data_ready and self.loaded_data is None:
+            self.loaded_data = DataLoader(temp_path).load_data()
+
+        with col2:
+            st.subheader("Optimizer")
+            self._show_tabs(is_data_ready)
+
+        st.divider()
+        self._show_results_of_optimization()
+
+    def _show_results_of_optimization(self):
+        """Section 'Results of Optimization'. Order always: 1 Constrained, 2 Global. The one run last is expanded by default."""
+        st.subheader("Results of Optimization")
+        last_tab = st.session_state.get(StateKeys.SESSION_KEY_LAST_OPTIMIZATION_TAB, "constrained")
+
+        with st.expander("Constrained optimization results", expanded=(last_tab != "global")):
+            self._render_constrained_results()
+
+        with st.expander("Global optimization results", expanded=(last_tab == "global")):
+            self._render_global_results()
+
+    def _render_constrained_results(self):
+        if (StateKeys.SESSION_KEY_CONSTR in st.session_state
+                and StateKeys.SESSION_KEY_WELL in st.session_state):
+            display = DisplayConstrainedResults(
+                st.session_state[StateKeys.SESSION_KEY_CONSTR],
+                st.session_state[StateKeys.SESSION_KEY_WELL],
+            )
+            c1, c2 = st.columns([1, 5])
+            with c1:
+                display.show_summary_metrics()
+                st.markdown("---")
+                display.show_detailed_results_by_well()
+            with c2:
+                display.show_production_curves()
+        else:
+            self._show_no_optimization_message("constrained")
+
+    def _render_global_results(self):
+        if StateKeys.SESSION_KEY_GLOBAL in st.session_state:
+            list_info = ["Unknown Field"]
+            if self.loaded_data is not None:
+                _, _, _, list_info = self.loaded_data
+            display = DisplayGlobalResults(
+                st.session_state[StateKeys.SESSION_KEY_GLOBAL],
+                list_info,
+            )
+            g1, g2 = st.columns([1, 5])
+            with g1:
+                display.show_summary_metrics()
+            with g2:
+                display.show_global_curve()
+        else:
+            self._show_no_optimization_message("global")
+
+    def _show_no_optimization_message(self, optimization_type: str):
+        """Message when no optimization has been run yet."""
+        st.info(
+            "No optimization has been run yet. Run one by choosing the parameters in the Optimizer."
+        )
 
     def _show_tabs(self, is_data_ready):
         """
@@ -45,17 +105,29 @@ class OptimizationPage:
         ])
         with tab1:
             if is_data_ready:
-                with st.container():
-                    constrained_settings = self.optimization_settings.choose_constrained_settings()
-                    self.optimization_execution.run_constrained_optimization(self.loaded_data, constrained_settings)
+                with st.expander("Configuration of Optimization", expanded=True):
+                    constrained_settings = self.optimization_settings.choose_constrained_settings(
+                        use_expander=False,
+                        render_button=lambda s: self.optimization_execution.run_constrained_optimization(
+                            self.loaded_data, s, message_outside=True
+                        ),
+                    )
+                if StateKeys.SESSION_KEY_CONSTR in st.session_state and StateKeys.SESSION_KEY_WELL in st.session_state:
+                    self.optimization_execution.optimization_completed_message(flag="constrained")
             else:
                 self._show_warning()
 
         with tab2:
             if is_data_ready:
-                with st.container():
-                    global_settings = self.optimization_settings.choose_global_settings()
-                    self.optimization_execution.run_global_optimization(self.loaded_data, global_settings)
+                with st.expander("Global Optimization Configuration", expanded=True):
+                    global_settings = self.optimization_settings.choose_global_settings(
+                        use_expander=False,
+                        render_button=lambda s: self.optimization_execution.run_global_optimization(
+                            self.loaded_data, s, message_outside=True
+                        ),
+                    )
+                if StateKeys.SESSION_KEY_GLOBAL in st.session_state:
+                    self.optimization_execution.optimization_completed_message(flag="global")
             else:
                 self._show_warning()
 

@@ -7,10 +7,30 @@ def inject_global_css():
     <style>
 
     /* ─────────────────────────────────────────────
+       TITLE & SUBHEADERS (native Streamlit + refinements)
+    ───────────────────────────────────────────── */
+    [data-testid="stAppViewContainer"] h1 {
+        font-weight: 700 !important;
+        letter-spacing: -0.02em !important;
+        color: var(--text-color) !important;
+        margin-bottom: 0.5rem !important;
+        padding-bottom: 0.75rem !important;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.15) !important;
+    }
+    [data-testid="stAppViewContainer"] h2 {
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        letter-spacing: 0.01em !important;
+        color: var(--text-color) !important;
+        opacity: 0.95;
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+
+    /* ─────────────────────────────────────────────
        BACKGROUND & GLOBAL
     ───────────────────────────────────────────── */
     [data-testid="stAppViewContainer"] {
-        /* Gradiente dinámico: usa el fondo del tema y una variante secundaria */
         background: linear-gradient(to bottom, var(--background-color) 0%, var(--secondary-background-color) 100%);
         background-attachment: fixed;
         color: var(--text-color);
@@ -35,6 +55,15 @@ def inject_global_css():
         border: 1px solid rgba(128, 128, 128, 0.2) !important;
         border-radius: 14px !important;
     }
+    /* Space between expander header and content (e.g. warning banner) */
+    [data-testid="stExpander"] > div:last-child {
+        padding-top: 16px !important;
+    }
+
+    /* Info alert: same font size as banner-warning text */
+    [data-testid="stAlert"] {
+        font-size: 14px !important;
+    }
 
     /* ─────────────────────────────────────────────
        PANEL HEADER
@@ -42,9 +71,9 @@ def inject_global_css():
     .panel-head {
         /* Color primario con transparencia para adaptarse al fondo */
         background: rgba(56, 139, 253, 0.1); 
-        border: 1px solid rgba(128, 128, 128, 0.2);
+        border: 1px solid var(--primary-color);
         border-left: 3px solid var(--primary-color);
-        border-radius: 14px;
+        border-radius: 10px;
         padding: 14px 18px;
         margin-bottom: 15px;
         animation: fadeSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -121,7 +150,7 @@ def inject_global_css():
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 14px 18px;
+        padding: 14px 18px 20px 18px;
         background: rgba(255, 193, 7, 0.1);
         border: 1px solid rgba(255, 193, 7, 0.3);
         border-left: 3px solid #ffc107;
@@ -155,49 +184,54 @@ def inject_global_css():
     }
 
     div[data-testid="stButton"] button[kind="primary"]:hover {
-        transform: translateY(-2px);
-        background: var(--primary-color);
+        transform: translateY(-4px);
+        background: rgba(56, 139, 253, 0.1);
         color: white !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
 
     /* ─────────────────────────────────────────────
-       METRIC CARDS
+       METRIC CARDS (vertical layout)
     ───────────────────────────────────────────── */
-    /* general style for the metric container */
-    .metric-card {
-        background-color: #1a1e26; /* background color */
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-        height: 100%; /* all cards have the same height */
+    .metric-cards-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
-    /* style for the metric title */
+    .metric-card {
+        background: rgba(128, 128, 128, 0.08);
+        border: 1px solid rgba(128, 128, 128, 0.18);
+        border-radius: 12px;
+        padding: 14px 18px;
+        min-height: auto;
+    }
     .metric-title {
-        color: #9AA0A6; /* text color */
-        font-size: 14px;
-        margin-bottom: 5px;
+        color: var(--text-color);
+        opacity: 0.75;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+    .metric-value {
+        color: var(--text-color);
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+    .metric-unit {
+        font-size: 0.9rem;
+        color: var(--text-color);
+        opacity: 0.7;
         font-weight: 500;
     }
-    /* style for the metric value */
-    .metric-value {
-        color: #FFFFFF; /* text color */
-        font-size: 28px;
-        font-weight: 700;
-        line-height: 1.2;
-    }
-    /* style for the metric unit */
-    .metric-unit {
-        font-size: 18px;
-        color: #9AA0A6;
-    }
-    /* style for the metric status tag */
     .status-tag {
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 600;
-        margin-top: 10px;
-        color: #00E676; /* text color */
+        margin-top: 8px;
+        color: #00E676;
     }
     </style>
     """

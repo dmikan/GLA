@@ -15,7 +15,7 @@ class OptimizationExecutionComponent:
     def __init__(self, db: SnowflakeDB):
         self.db = db
 
-    def run_global_optimization(self, loaded_data, global_settings):
+    def run_global_optimization(self, loaded_data, global_settings, message_outside=False):
         q_gl_list, q_fluid_list, wct_list, list_info = loaded_data
 
         if not q_gl_list:
@@ -26,7 +26,6 @@ class OptimizationExecutionComponent:
         if st.button("Execute Global Optimization", type="primary", use_container_width=True):
             with st.spinner("Processing data..."):
                 try:
-                    
                     fitting_service = FittingService(q_gl_list, q_fluid_list, wct_list)
                     fit = fitting_service.perform_fitting_group()
 
@@ -35,38 +34,38 @@ class OptimizationExecutionComponent:
                     optimization = field_optimization_service.get_latest_field_optimization()
 
                     pipeline = OptimizationGlobalPipelineService(
-                                                                q_gl_common_range=fit["q_gl_common_range"],
-                                                                q_oil_rates_list=fit["q_oil_rates_list"],
-                                                                qgl_min=global_settings['qgl_min_global'],
-                                                                p_qoil=global_settings['p_qoil_global'],
-                                                                p_qgl=global_settings['p_qgl_global'],
-                                                                max_iterations=40,
-                                                                max_qgl=20000)
+                        q_gl_common_range=fit["q_gl_common_range"],
+                        q_oil_rates_list=fit["q_oil_rates_list"],
+                        qgl_min=global_settings['qgl_min_global'],
+                        p_qoil=global_settings['p_qoil_global'],
+                        p_qgl=global_settings['p_qgl_global'],
+                        max_iterations=40,
+                        max_qgl=20000)
                     optimization_results = pipeline.run()
-                    
-                    # Save GLOBAL results in session_state
-                    st.session_state[StateKeys.SESSION_KEY_GLOBAL] = optimization_results
-                    
-                    self.optimization_completed_message(flag="global")
 
-                    display_global_results = DisplayGlobalResults(optimization_results, list_info)
-                    display_global_results.show() 
-                    just_calculated = True	
+                    st.session_state[StateKeys.SESSION_KEY_GLOBAL] = optimization_results
+                    st.session_state[StateKeys.SESSION_KEY_LAST_OPTIMIZATION_TAB] = "global"
+                    just_calculated = True
+                    if not message_outside:
+                        self.optimization_completed_message(flag="global")
+                        display_global_results = DisplayGlobalResults(optimization_results, list_info)
+                        display_global_results.show()
 
                 except Exception as e:
                     st.error(f"❌ Error during global optimization: {str(e)}")
                     st.exception(e)
-        
+
         if not just_calculated and StateKeys.SESSION_KEY_GLOBAL in st.session_state:
             optimization_results = st.session_state[StateKeys.SESSION_KEY_GLOBAL]
-            self.optimization_completed_message(flag="global")
-            display_global_results = DisplayGlobalResults(optimization_results, list_info)
-            display_global_results.show()
+            if not message_outside:
+                self.optimization_completed_message(flag="global")
+                display_global_results = DisplayGlobalResults(optimization_results, list_info)
+                display_global_results.show()
 
 
 
 
-    def run_constrained_optimization(self, loaded_data, constrained_settings):
+    def run_constrained_optimization(self, loaded_data, constrained_settings, message_outside=False):
         q_gl_list, q_fluid_list, wct_list, list_info = loaded_data
 
         if not q_gl_list:
@@ -81,46 +80,43 @@ class OptimizationExecutionComponent:
                     fit = fitting_service.perform_fitting_group()
 
                     pipeline = OptimizationConstrainedPipelineService(
-                                                                    q_gl_common_range=fit['q_gl_common_range'],
-                                                                    q_oil_rates_list=fit["q_oil_rates_list"],
-                                                                    plot_data=fit["plot_data"],
-                                                                    list_info=list_info,
-                                                                    qgl_limit=constrained_settings['qgl_limit_constrained'],
-                                                                    qgl_min=constrained_settings['qgl_min_constrained'],
-                                                                    p_qoil=constrained_settings['p_qoil_constrained'],
-                                                                    p_qgl=constrained_settings['p_qgl_constrained'],
-                                                                    db=self.db
-                                    )
+                        q_gl_common_range=fit['q_gl_common_range'],
+                        q_oil_rates_list=fit["q_oil_rates_list"],
+                        plot_data=fit["plot_data"],
+                        list_info=list_info,
+                        qgl_limit=constrained_settings['qgl_limit_constrained'],
+                        qgl_min=constrained_settings['qgl_min_constrained'],
+                        p_qoil=constrained_settings['p_qoil_constrained'],
+                        p_qgl=constrained_settings['p_qgl_constrained'],
+                        db=self.db
+                    )
                     optimization_results = pipeline.run()
-                    
-                    # Save CONSTR results in session_state
+
                     st.session_state[StateKeys.SESSION_KEY_CONSTR] = optimization_results
-                    
-                    # Once the constrained optimization is completed:
-                    self.optimization_completed_message(flag="constrained")
+                    st.session_state[StateKeys.SESSION_KEY_LAST_OPTIMIZATION_TAB] = "constrained"
 
                     well_optimization_repository = WellOptimizationRepository(self.db)
                     well_optimization_service = WellOptimizationService(well_optimization_repository)
                     well_results = well_optimization_service.get_latest_well_optimizations()
-                    
-                    # Save WELL results in session_state
                     st.session_state[StateKeys.SESSION_KEY_WELL] = well_results
 
-                    display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
-                    display_constrained_results.show()
                     just_calculated = True
+                    if not message_outside:
+                        self.optimization_completed_message(flag="constrained")
+                        display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
+                        display_constrained_results.show()
 
                 except Exception as e:
                     st.error(f"❌ Error during constrained optimization: {str(e)}")
                     st.exception(e)
 
-        # Logic to show saved CONSTR results
         if not just_calculated and StateKeys.SESSION_KEY_CONSTR in st.session_state and StateKeys.SESSION_KEY_WELL in st.session_state:
             optimization_results = st.session_state[StateKeys.SESSION_KEY_CONSTR]
             well_results = st.session_state[StateKeys.SESSION_KEY_WELL]
-            self.optimization_completed_message(flag="constrained")
-            display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
-            display_constrained_results.show()
+            if not message_outside:
+                self.optimization_completed_message(flag="constrained")
+                display_constrained_results = DisplayConstrainedResults(optimization_results, well_results)
+                display_constrained_results.show()
 
 
     def optimization_completed_message(self, flag):

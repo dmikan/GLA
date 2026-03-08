@@ -8,13 +8,13 @@ from app.utils.state_keys import StateKeys
 
 
 class ManualInputComponent:
-    def __init__(self, tmp_dir):
-        self.tmp_dir = Path(tmp_dir)
-        self.num_wells = 5
-        self.num_rows = 1
-        self.field_labels = None
-        self.wct_labels = None
-        self.prod_labels = None
+    def __init__(self, tmp_dir: Path):
+        self.tmp_dir: Path = tmp_dir
+        self.num_wells: int = 5
+        self.num_rows: int = 1
+        self.field_labels: list[str] = []
+        self.wct_labels: list[str] = []
+        self.prod_labels: list[str] = []
 
         # Initialize global state to avoid resets
         st.session_state[StateKeys.SESSION_KEY_INFO_DF] = pd.DataFrame()
@@ -26,7 +26,7 @@ class ManualInputComponent:
         """Load the manual input component."""
         inject_global_css()
         self._render_data_editor()
-        self._build_and_save_data()
+        self._show_saved_banner_outside_expander()
 
 
     def _render_data_editor(self):
@@ -36,13 +36,18 @@ class ManualInputComponent:
             self._choose_number_of_wells()
             self._generate_labels()
             self._generate_dataframe_editors()
-
+            self._build_and_save_data()
 
     def _build_and_save_data(self):
         """Build and save the final DataFrame."""
         if st.button("Save all data", key="save_button", type="primary", use_container_width=True):
             self._build_final_dataframe()
             self._persistence()
+
+    def _show_saved_banner_outside_expander(self):
+        """Show 'Data saved successfully' below the Data Editor expander."""
+        if "_manual_saved_path" in st.session_state and st.session_state["_manual_saved_path"] is not None:
+            _saved_success_banner(Path(st.session_state["_manual_saved_path"]))
 
     def _choose_number_of_wells(self):
         """Choose the number of wells."""
@@ -152,21 +157,13 @@ class ManualInputComponent:
                 field_name = final_df.iloc[2, 0] or "manual_data"
                 uid = uuid.uuid4().hex[:8]
                 filename = f"data_{str(field_name).lower().replace(' ', '_')}_{uid}.csv"
-                temp_path = self.tmp_dir / filename
-                
+                temp_path: Path = self.tmp_dir / filename
                 final_df.to_csv(temp_path, index=False, header=False)
 
-                st.markdown(f"""
-                <div class="save-banner-ok">
-                  <span style="font-size:18px;">✅</span>
-                  <div>
-                    <strong>Data saved successfully</strong>
-                    <div class="banner-path">{temp_path}</div>
-                  </div>
-                </div>""", unsafe_allow_html=True)
-                
                 st.session_state[StateKeys.SESSION_KEY_TEMP_PATH] = temp_path
                 st.session_state[StateKeys.SESSION_KEY_DATA_LOAD_MODE] = "manual_input"
+                st.session_state["_manual_saved_path"] = temp_path
+
             except Exception as e:
                 st.error(f"Error saving file: {e}")
 
@@ -179,4 +176,15 @@ def _panel_open(icon, caption, badge=None):
         <div class="panel-head-caption">{caption}</div>
       </div>
       {badge_html}
+    </div>""", unsafe_allow_html=True)
+
+
+def _saved_success_banner(temp_path: Path):
+    st.markdown(f"""
+    <div class="save-banner-ok">
+      <span style="font-size:18px;">✅</span>
+      <div>
+        <strong>Data saved successfully</strong>
+        <div class="banner-path">{temp_path}</div>
+      </div>
     </div>""", unsafe_allow_html=True)
