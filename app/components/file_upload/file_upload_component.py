@@ -6,40 +6,42 @@ import os
 from app.components.file_upload.manual_input_component import ManualInputComponent
 from app.components.file_upload.csv_input_component import CSVInputComponent
 from app.components.file_upload.proper_input_component import ProperInputComponent
+from app.utils.state_keys import StateKeys
 
 class FileUploadComponent:
 
+
     def show(self):
+        """Show the file upload component."""
         self._init_session_state()
-        tmp_dir = self._get_tmp_dir()
-        option = self._choose_data_loading_method()
+        tmp_dir: Path = self._get_tmp_dir()
+        tab1, tab2, _ = self._choose_data_loading_method()
 
-        #st.session_state.data_load_mode = None
-        #st.session_state.temp_path = None
-
-        if option == "Upload csv file":
-            csv_input = CSVInputComponent(tmp_dir)
-            csv_input.show_csv_loader_widget()
-            csv_input.load()
-        elif option == "Manual input":
+        with tab1:
             manual_input = ManualInputComponent(tmp_dir)
             manual_input.load()
-        elif option == "Generate from Prosper":
-            proper_input = ProperInputComponent(tmp_dir)
-            proper_input.load()
-        return st.session_state.temp_path, st.session_state.data_load_mode
+        with tab2:
+            csv_input = CSVInputComponent(tmp_dir)
+            csv_input.load()
+        #with tab3:
+            #proper_input = ProperInputComponent(tmp_dir)
+            #proper_input.load()
+
 
 
     def _init_session_state(self):
-        if 'uploaded_file' not in st.session_state:
-            st.session_state.uploaded_file = None
-        if 'temp_path' not in st.session_state:
-            st.session_state.temp_path = None
-        if 'data_load_mode' not in st.session_state:
-            st.session_state.data_load_mode = None
+        """Initialize session state variables."""
+        if StateKeys.SESSION_KEY_UPLOADED_FILE not in st.session_state:
+            st.session_state[StateKeys.SESSION_KEY_UPLOADED_FILE] = None
+        if StateKeys.SESSION_KEY_TEMP_PATH not in st.session_state:
+            st.session_state[StateKeys.SESSION_KEY_TEMP_PATH] = None
+        if StateKeys.SESSION_KEY_DATA_LOAD_MODE not in st.session_state:
+            st.session_state[StateKeys.SESSION_KEY_DATA_LOAD_MODE] = None
 
 
-    def _get_tmp_dir(self):
+
+    def _get_tmp_dir(self) -> Path:
+        """Get the temporary directory for storing uploaded files."""
         is_snowflake = os.path.exists("/home/udf")
         if is_snowflake:
             return Path("/tmp")
@@ -49,16 +51,13 @@ class FileUploadComponent:
             local_path.mkdir(parents=True, exist_ok=True)
             return local_path
 
+
+    
     def _choose_data_loading_method(self):
-        option = st.radio(
-            "Choose a data loading method:",
-            options=["Upload csv file", "Manual input", "Generate from Prosper"],
-            horizontal=True
-        )
-        return option
-
-
-if  __name__== "__main__":
-
-    var1 = Path(__file__).parent.parent.parent.parent
-    print(var1)
+        """Choose the data loading method."""
+        tab1, tab2, tab3 = st.tabs([
+            "Manual input",
+            "Upload csv file",
+            "Generate from Prosper"
+        ])
+        return tab1, tab2, tab3

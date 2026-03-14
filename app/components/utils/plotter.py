@@ -5,7 +5,7 @@ from math import ceil
 
 class Plotter:
     def __init__(self, optimization_results: dict):
-        self.bg_color = "#0E1117"
+        self.bg_color = "#0e1117"
         self.grid_color = "#37474F"
         self.text_color = "#FFFFFF"
         self.line_color = "#00E676"
@@ -92,24 +92,32 @@ class Plotter:
     It creates a line chart with markers for production and gas injection, as well as optimal lines and optimal points.
     '''
     def create_well_curves(self, well_results):
-        cols = 3
+        cols = 1
         rows = int(ceil(len(well_results) / cols))
-        PLOT_HEIGHT = 400 * rows
-        VERTICAL_SPACING = 0.5 / rows
-        MARGIN_TOP_PX = 140
-        MARGIN_BOTTOM_PX = 80
+        # Fixed pixel height per subplot and fixed gap; grid height excludes margins
+        SUBPLOT_HEIGHT_PX = 300
+        GAP_PX = 32
+        MARGIN_TOP_PX = 48
+        MARGIN_BOTTOM_PX = 60
+        grid_height_px = rows * SUBPLOT_HEIGHT_PX + max(0, rows - 1) * GAP_PX
+        # vertical_spacing = one gap as fraction of grid height (Plotly uses fraction per gap)
+        VERTICAL_SPACING = (GAP_PX / grid_height_px) if rows > 1 else 0.02
+        PLOT_HEIGHT = grid_height_px + MARGIN_TOP_PX + MARGIN_BOTTOM_PX
+        # Equal row heights so each subplot gets the same share
+        row_heights = [1.0] * rows
 
         fig_prod = make_subplots(
             cols=cols,
-            rows = rows,
-            subplot_titles=[f"Well {well.well_name}" for well in well_results],
-            horizontal_spacing=0.12,
-            vertical_spacing=VERTICAL_SPACING
+            rows=rows,
+            subplot_titles=None,
+            horizontal_spacing=0.08,
+            vertical_spacing=VERTICAL_SPACING,
+            row_heights=row_heights,
         )
 
         for idx, (well_data, well_result) in enumerate(zip(self.optimization_results['plot_data'], well_results)):
-            row = (idx // 3) + 1
-            col = (idx % 3) + 1
+            row = (idx // 1) + 1
+            col = (idx % 1) + 1
 
             optimal_qgl = well_result.optimal_gas_injection
             optimal_prod = well_result.optimal_production
@@ -129,7 +137,8 @@ class Plotter:
                     name='Adjusted Fluid Curve',
                     line=dict(width=3, color=self.fluid_line_color),
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group1'
+                    legendgroup='group1',
+                    hovertemplate="QGL: %{x:.0f} mscfd<br>Fluid: %{y:.1f} bfpd<extra></extra>",
                 ),
                 row=row, col=col
             )
@@ -142,7 +151,8 @@ class Plotter:
                     name='Adjusted Oil Curve',
                     line=dict(width=3, color=self.line_color),
                     showlegend=True if idx == 0 else False,
-                    legendgroup='group2'
+                    legendgroup='group2',
+                    hovertemplate="QGL: %{x:.0f} mscfd<br>Oil: %{y:.1f} bopd<extra></extra>",
                 ),
                 row=row, col=col
             )
@@ -260,26 +270,65 @@ class Plotter:
                 row=row, col=col
             )
 
+            # Axis labels only on bottom row (x) and left column (y) to avoid repetition
+            x_title = "Gas lift rate (mscfd)" if row == rows else None
+            y_title = "Fluid/Oil rate (bfpd/bopd)" if col == 1 else None
+            qgl = well_data["q_gl_common_range"]
+            if qgl is not None and len(qgl) > 0:
+                x_min, x_max = float(min(qgl)), float(max(qgl))
+            else:
+                x_min, x_max = 0.0, 0.0
             fig_prod.update_xaxes(
-                title_text="Gas lift rate (mscfd)",
+                title_text=x_title,
                 row=row, col=col,
+                range=[x_min, x_max],
+                showgrid=True,
+                gridwidth=1,
+                minor_griddash="dot",
                 gridcolor=self.grid_color,
                 linecolor=self.grid_color,
                 tickfont=dict(color=self.text_color),
                 title_font=dict(color=self.text_color),
                 showline=True,
-                mirror=True
+                mirror=True,
+            )
+            fig_prod.update_yaxes(
+                title_text=y_title,
+                row=row, col=col,
+                showgrid=False,
+                gridcolor=self.grid_color,
+                linecolor=self.grid_color,
+                tickfont=dict(color=self.text_color),
+                title_font=dict(color=self.text_color),
+                showline=True,
+                mirror=True,
             )
 
-            fig_prod.update_yaxes(
-                title_text="Fluid/Oil rate (bfpd/bopd)",
-                row=row, col=col,
-                gridcolor=self.grid_color,
-                linecolor=self.grid_color,
-                tickfont=dict(color=self.text_color),
-                title_font=dict(color=self.text_color),
-                showline=True,
-                mirror=True
+            # Well name as annotation inside the subplot (top-left), equal margin from top and left
+            xref = "x" if row == 1 else f"x{row}"
+            yref = "y" if row == 1 else f"y{row}"
+            y_vals = list(well_data["q_fluid_predicted"]) + list(well_data["q_oil_predicted"])
+            y_min = float(min(y_vals)) if y_vals else 0.0
+            y_max = float(max(y_vals)) if y_vals else 1.0
+            x_range = x_max - x_min or 1.0
+            y_range = y_max - y_min or 1.0
+            inset_frac = 0.001
+            ann_x = x_min + inset_frac * x_range
+            ann_y = y_max - inset_frac * y_range
+            fig_prod.add_annotation(
+                x=ann_x,
+                y=ann_y,
+                xref=xref,
+                yref=yref,
+                text=f"<b>{well_result.well_name}</b>",
+                showarrow=False,
+                xanchor="left",
+                yanchor="top",
+                font=dict(size=13, color=self.text_color),
+                bgcolor="rgba(34, 39, 46, 0.85)",
+                borderpad=6,
+                borderwidth=1,
+                bordercolor="rgba(128, 128, 128, 0.3)",
             )
 
         fig_prod.update_layout(
@@ -298,12 +347,10 @@ class Plotter:
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
-                y=1.2,
+                y=1.02,
                 xanchor="right",
                 x=1,
-                font=dict(color=self.text_color)
+                font=dict(color=self.text_color),
             ),
         )
         return fig_prod
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)

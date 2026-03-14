@@ -6,9 +6,11 @@ import streamlit as st
 from app.pages.optimization_page import OptimizationPage
 from app.pages.other_services_page import OtherServicesPage
 from app.pages.historical_data_page import HistoricalPage
+from app.styles.custom_styles import inject_global_css
 
 def main():
     # Configuration
+    inject_global_css()
     st.set_page_config(page_title="Gas Lift Allocation Optimizer", layout="wide")
     st.title("🛢️ Gas Lift Allocation Optimizer")
 

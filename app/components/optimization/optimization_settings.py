@@ -13,18 +13,14 @@ class OptimizationSettingsComponent:
         self.qgl_min_constrained = 300
         self.p_qoil_constrained = 70.0
         self.p_qgl_constrained = 300.0
-        self.SESSION_KEY_GLOBAL = "global_optimization_results"
-        self.SESSION_KEY_CONSTR = "constrained_optimization_results"
-        self.SESSION_KEY_WELL = "well_results"
 
-    '''
-    Method to show the global optimization.
-    Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
-    '''
-    def choose_global_settings(self):
-        
-        with st.expander("Global Optimization Configuration", expanded=True):
-
+    
+    def choose_global_settings(self, use_expander=True, render_button=None):
+        '''
+        If use_expander=False, only the inputs are rendered (no expander wrapper).
+        If render_button is a callable(settings_dict), it is called at the end so the button renders inside the same expander.
+        '''
+        def _content():
             row1_col1, row1_col2 = st.columns(2)
             with row1_col1:
                 self.p_qoil_global = st.number_input(
@@ -58,21 +54,26 @@ class OptimizationSettingsComponent:
                     key="qgl_min_global"
                 )
 
-        return dict(
-            p_qoil_global=self.p_qoil_global,
-            p_qgl_global=self.p_qgl_global,
-            qgl_min_global=self.qgl_min_global
-        )
+            settings = dict(
+                p_qoil_global=self.p_qoil_global,
+                p_qgl_global=self.p_qgl_global,
+                qgl_min_global=self.qgl_min_global
+            )
+            if render_button:
+                render_button(settings)
+            return settings
 
-    '''
-    Method to show the constrained optimization.
-    Now receives the pre-processed data as a tuple: (QGL_lists, Qprod_lists, Metadata_list).
-    '''
-    def choose_constrained_settings(self):
+        if use_expander:
+            with st.expander("Global Optimization Configuration", expanded=True):
+                return _content()
+        return _content()
 
-        with st.expander("Configuration of Optimization", expanded=True):
-
-            # First row with 2 columns
+    def choose_constrained_settings(self, use_expander=True, render_button=None):
+        '''
+        If use_expander=False, only the inputs are rendered (no expander wrapper).
+        If render_button is a callable(settings_dict), it is called at the end so the button renders inside the same expander.
+        '''
+        def _content():
             row1_col1, row1_col2 = st.columns(2)
 
             with row1_col1:
@@ -95,7 +96,6 @@ class OptimizationSettingsComponent:
                     key="qgl_min"
                 )
 
-            # Segunda fila con 2 columnas
             row2_col1, row2_col2 = st.columns(2)
 
             with row2_col1:
@@ -118,9 +118,17 @@ class OptimizationSettingsComponent:
                     key="p_qgl"
                 )
 
-        return dict(
-            qgl_limit_constrained=self.qgl_limit_constrained,
-            qgl_min_constrained=self.qgl_min_constrained,
-            p_qoil_constrained=self.p_qoil_constrained,
-            p_qgl_constrained=self.p_qgl_constrained
-        )
+            settings = dict(
+                qgl_limit_constrained=self.qgl_limit_constrained,
+                qgl_min_constrained=self.qgl_min_constrained,
+                p_qoil_constrained=self.p_qoil_constrained,
+                p_qgl_constrained=self.p_qgl_constrained
+            )
+            if render_button:
+                render_button(settings)
+            return settings
+
+        if use_expander:
+            with st.expander("Configuration of Optimization", expanded=True):
+                return _content()
+        return _content()

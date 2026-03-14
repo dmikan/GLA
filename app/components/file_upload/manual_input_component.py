@@ -1,128 +1,190 @@
+import uuid
 import streamlit as st
 import pandas as pd
+from pathlib import Path
+from app.styles.custom_styles import inject_global_css
+from app.utils.state_keys import StateKeys
+
+
 
 class ManualInputComponent:
-    def __init__(self, tmp_dir):
-        self.tmp_dir = tmp_dir
+    def __init__(self, tmp_dir: Path):
+        self.tmp_dir: Path = tmp_dir
+        self.num_wells: int = 5
+        self.num_rows: int = 1
+        self.field_labels: list[str] = []
+        self.wct_labels: list[str] = []
+        self.prod_labels: list[str] = []
+
+        # Initialize global state to avoid resets
+        st.session_state[StateKeys.SESSION_KEY_INFO_DF] = pd.DataFrame()
+        st.session_state[StateKeys.SESSION_KEY_WCT_DF] = pd.DataFrame()
+        st.session_state[StateKeys.SESSION_KEY_PROD_DF] = pd.DataFrame()
+        st.session_state[StateKeys.SESSION_KEY_FINAL_DF] = pd.DataFrame()
 
     def load(self):
-        manual_data = self._handle_manual_input()
-        if manual_data is not None and manual_data[1]:
-            st.session_state.data_load_mode = "manual_input"
-            st.session_state.temp_path = manual_data[1]   
+        """Load the manual input component."""
+        inject_global_css()
+        self._render_data_editor()
+        self._show_saved_banner_outside_expander()
 
-    def _handle_manual_input(self):
-        manual_data_df = self._show()
-        if manual_data_df is not None and not manual_data_df.empty:
-            df = manual_data_df
-            field_name = df.iloc[2, 0] if len(df) > 2 and not pd.isna(df.iloc[2, 0]) else "manual_data"
-            temp_path = self.tmp_dir / f"data_{field_name.lower().replace(' ', '_')}.csv"
+
+    def _render_data_editor(self):
+        """Render the data editor."""
+        expander = st.expander("Data Editor", expanded=True)
+        with expander:
+            self._choose_number_of_wells()
+            self._generate_labels()
+            self._generate_dataframe_editors()
+            self._build_and_save_data()
+
+    def _build_and_save_data(self):
+        """Build and save the final DataFrame."""
+        if st.button("Save all data", key="save_button", type="primary", use_container_width=True):
+            self._build_final_dataframe()
+            self._persistence()
+
+    def _show_saved_banner_outside_expander(self):
+        """Show 'Data saved successfully' below the Data Editor expander."""
+        if "_manual_saved_path" in st.session_state and st.session_state["_manual_saved_path"] is not None:
+            _saved_success_banner(Path(st.session_state["_manual_saved_path"]))
+
+    def _choose_number_of_wells(self):
+        """Choose the number of wells."""
+        self.num_wells = st.number_input("Set number of wells", min_value=1, max_value=10, value=5)
+
+    def _generate_labels(self):
+        """Generate labels for the data editor."""
+        self.info_labels = ["Field"] + [f"Well {i+1}" for i in range(self.num_wells)]
+        self.wct_labels = [f"wct {i+1}" for i in range(self.num_wells)]
+        self.prod_labels = [item for i in range(1, self.num_wells + 1) for item in (f"qgl {i}", f"ql {i}")]
+
+
+    @st.fragment
+    def _generate_dataframe_editors(self):
+        """Keeps keyboard focus and Tab navigation."""
+        self._column_config()
+        self._sync_dataframe(StateKeys.SESSION_KEY_INFO_DF, self.info_labels, 1)
+        self._sync_dataframe(StateKeys.SESSION_KEY_WCT_DF, self.wct_labels, 1)
+        self._sync_dataframe(StateKeys.SESSION_KEY_PROD_DF, self.prod_labels, self.num_rows)
+
+        tab1, tab2, tab3 = st.tabs(["Fields & Wells", "Water-Cut Threshold", "Production Data"])
+        with tab1:
+            _panel_open("📍",
+            "Define the field name and assign identifiers for each well.",
+            f"{self.num_wells} well configured")
+            st.session_state[StateKeys.SESSION_KEY_INFO_DF] = st.data_editor(
+                st.session_state[StateKeys.SESSION_KEY_INFO_DF],
+                key="editor_fields",
+                hide_index=True,
+                use_container_width=True,
+            )
+
+        with tab2:
+            _panel_open("📉",
+            "Set the water-cut threshold (WCT) for each well.",
+            f"One row · {self.num_wells} wells")
+            st.session_state[StateKeys.SESSION_KEY_WCT_DF] = st.data_editor(
+                st.session_state[StateKeys.SESSION_KEY_WCT_DF],
+                key="editor_wct",
+                hide_index=True,
+                use_container_width=True,
+            )
+
+        with tab3:
+            _panel_open("📊",
+            "Enter daily injection rates and fluid types for the simulation.",
+            f"{self.num_rows} data rows · {self.num_wells * 2} columns")
+            st.session_state[StateKeys.SESSION_KEY_PROD_DF] = st.data_editor(
+                st.session_state[StateKeys.SESSION_KEY_PROD_DF],
+                column_config=self.column_config,
+                key="editor_prod",
+                hide_index=True,
+                use_container_width=True,
+                num_rows="dynamic"
+            )
+
+    def _column_config(self):
+        """Configure the columns for the production data."""
+        self.column_config = {
+            col: st.column_config.TextColumn(
+                label=col,
+                default="", 
+            ) 
+            for col in self.prod_labels
+        }    
+
+    def _sync_dataframe(self, key, labels, rows):
+        """Sync data without losing what was written."""
+        current = st.session_state.get(key)
+        new_df = pd.DataFrame("", index=range(rows), columns=labels)
+        if not current.empty:
+            common_cols = [c for c in labels if c in current.columns]
+            rows_to_copy = min(len(current), rows)
+            new_df.iloc[:rows_to_copy][common_cols] = current.iloc[:rows_to_copy][common_cols]
+        st.session_state[key] = new_df
+
+
+    def _build_final_dataframe(self):
+        """Build the final DataFrame for optimization."""
+        try:
+            f_df = st.session_state[StateKeys.SESSION_KEY_INFO_DF]
+            w_df = st.session_state[StateKeys.SESSION_KEY_WCT_DF]
+            p_df = st.session_state[StateKeys.SESSION_KEY_PROD_DF]
+
+            n_cols = len(p_df.columns) + 1
+            final = pd.DataFrame(columns=range(n_cols))
             
-            #if st.button("Guardar datos manuales"):
+            final.loc[0] = ["description"] + [""] * (n_cols - 1)
+            final.loc[1] = f_df.columns.tolist() + [""] * (n_cols - len(f_df.columns))
+            final.loc[2] = f_df.iloc[0].tolist() + [""] * (n_cols - len(f_df.columns))
+            final.loc[3] = ["wct"] + w_df.iloc[0].tolist() + [""] * (n_cols - len(w_df.columns) - 1)
+            final.loc[4] = ["index"] + p_df.columns.tolist()
+
+            for i, (idx, row) in enumerate(p_df.iterrows()):
+                final.loc[5 + i] = [i + 1] + row.tolist()
+
+            st.session_state[StateKeys.SESSION_KEY_FINAL_DF] = final
+        except Exception as e:
+            st.error(f"Error building DataFrame: {e}")
+
+
+    def _persistence(self):
+        """Save the final DataFrame to a CSV file."""
+        final_df = st.session_state[StateKeys.SESSION_KEY_FINAL_DF]
+        if final_df is not None:
             try:
-                df.to_csv(temp_path, index=False, header=False) 
-                st.success(f"Data saved successfully.")
-                st.session_state.uploaded_file = df
-                return df, temp_path
+                field_name = final_df.iloc[2, 0] or "manual_data"
+                uid = uuid.uuid4().hex[:8]
+                filename = f"data_{str(field_name).lower().replace(' ', '_')}_{uid}.csv"
+                temp_path: Path = self.tmp_dir / filename
+                final_df.to_csv(temp_path, index=False, header=False)
+
+                st.session_state[StateKeys.SESSION_KEY_TEMP_PATH] = temp_path
+                st.session_state[StateKeys.SESSION_KEY_DATA_LOAD_MODE] = "manual_input"
+                st.session_state["_manual_saved_path"] = temp_path
+
             except Exception as e:
-                st.error(f"Error saving data: {e}")
-        return None, None 
+                st.error(f"Error saving file: {e}")
 
-    def _create_input_dataframe(self, num_wells, num_filas, input_columns_info, production_columns):
-        input_df_info = pd.DataFrame(
-            [["" for _ in input_columns_info]],
-            columns=input_columns_info,
-            index=[1]
-        )
-        
-        input_df = pd.DataFrame(
-            [["" for _ in production_columns] for _ in range(num_filas)],
-            columns=production_columns,
-            index=range(1, num_filas + 1)
-        )
-        
-        return input_df_info, input_df
-
-    def _build_final_dataframe(self, edited_input_df_info, edited_input_df):
-        total_columns = len(edited_input_df.columns)
-        final_df = pd.DataFrame(columns=range(total_columns))
-
-        # Fila 1: Descripción
-        final_df.loc[0] = ["description"] + [""] * (total_columns - 1)
-
-        # Fila 2: Nombres de campos/pozos
-        wells_header = edited_input_df_info.columns.tolist() + [""] * (total_columns - len(edited_input_df_info.columns))
-        final_df.loc[1] = wells_header
-
-        # Fila 3: Valores de campos/pozos
-        if not edited_input_df_info.empty:
-            wells_values = edited_input_df_info.iloc[0].tolist() + [""] * (total_columns - len(edited_input_df_info.columns))
-            final_df.loc[2] = wells_values
-
-        # Fila 4: Encabezados de datos
-        final_df.loc[3] = edited_input_df.columns.tolist()
-
-        # Filas siguientes: Datos de producción
-        for i, row in edited_input_df.iterrows():
-            final_df.loc[4 + i] = row.tolist()
-        
-        return final_df
-
-    def _show(self):
-        with st.expander("⚙️ Configuration Settings", expanded=True):
-            col1, col2 = st.columns(2)
-            with col1:
-                num_wells = st.number_input("Number of wells", min_value=1, max_value=100, value=5, step=1)
-            
-            with col2:
-                num_filas = st.number_input("Number of data rows", min_value=1, max_value=100, value=5, step=1)
+def _panel_open(icon, caption, badge=None):
+    badge_html = f'<span class="panel-badge">⬡ {badge}</span>' if badge else ""
+    st.markdown(f"""
+    <div class="panel-head">
+      <div class="panel-head-row">
+        <span class="panel-head-icon">{icon}</span>
+        <div class="panel-head-caption">{caption}</div>
+      </div>
+      {badge_html}
+    </div>""", unsafe_allow_html=True)
 
 
-
-        st.divider() 
-        st.subheader("📋 Information of Fields and Wells")
-        st.caption("Please define the field name and assign identifiers for each well below.")
-        
-        well_columns = [f"well_{i+1}" for i in range(num_wells)]
-        input_columns_info = ["field"] + well_columns
-        
-        input_df_info, input_df = self._create_input_dataframe(
-            num_wells, num_filas, input_columns_info,
-            [item for i in range(1, num_wells + 1) for item in (f"q_inj_w{i}", f"fluid_w{i}")]
-        )
-
-        info_config = {"field": st.column_config.TextColumn("📍 Field")}
-        info_config.update({col: st.column_config.TextColumn(f"🛢️ {col.replace('_', ' ').title()}") for col in well_columns})
-
-        edited_input_df_info = st.data_editor(
-            input_df_info,
-            column_config=info_config, 
-            num_rows="fixed",
-            hide_index=True, 
-            use_container_width=True,
-            key="info_editor"
-        )
-
-
-        st.divider() 
-        st.subheader("📊 Production Data Input")
-        st.caption("Enter the daily injection rates and fluid types for the simulation.")
-
-        prod_config = {}
-        for i in range(1, num_wells + 1): 
-            prod_config[f"q_inj_w{i}"] = st.column_config.TextColumn(f"QGL W{i}")
-            prod_config[f"fluid_w{i}"] = st.column_config.TextColumn(f"QL W{i}")
-
-        edited_input_df = st.data_editor(
-            input_df,
-            column_config=prod_config,  
-            num_rows="fixed",
-            hide_index=False,
-            use_container_width=True,
-            key="prod_editor"
-        )
-        
-        if "index" not in edited_input_df.columns:
-            edited_input_df.insert(0, "index", range(1, len(edited_input_df) + 1))
-
-        return self._build_final_dataframe(edited_input_df_info, edited_input_df)
+def _saved_success_banner(temp_path: Path):
+    st.markdown(f"""
+    <div class="save-banner-ok">
+      <span style="font-size:18px;">✅</span>
+      <div>
+        <strong>Data saved successfully</strong>
+        <div class="banner-path">{temp_path}</div>
+      </div>
+    </div>""", unsafe_allow_html=True)
