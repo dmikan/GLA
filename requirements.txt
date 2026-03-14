@@ -11,4 +11,3 @@ snowflake-snowpark-python
 streamlit
 reportlab
 pdfrw
-kaleido

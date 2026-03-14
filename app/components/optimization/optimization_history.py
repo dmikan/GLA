@@ -8,6 +8,7 @@ from backend.entities.field_optimization import FieldOptimization
 from backend.repositories.field_optimization_repository import FieldOptimizationRepository
 from backend.repositories.well_optimization_repository import WellOptimizationRepository
 from backend.entities.well_optimization import WellOptimization
+from typing import Optional
 
 
 class OptimizationHistoryComponent:

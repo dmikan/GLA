@@ -1,6 +1,5 @@
 import streamlit as st
 from pathlib import Path
-from app.styles.custom_styles import inject_global_css
 from app.components.file_upload.file_upload_component import FileUploadComponent
 from app.components.optimization.optimization_settings import OptimizationSettingsComponent
 from app.components.optimization.optimization_history import OptimizationHistoryComponent
@@ -26,7 +25,6 @@ class OptimizationPage:
         This method is called by the app to show the optimization page.
         It is called once when the user navigates to the optimization page.
         """
-        inject_global_css()
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("Data loading")
