@@ -30,7 +30,7 @@ class WellOptimizationRepository:
     def find_by_optimization_id(self, opt_id: int) -> List[WellOptimization]:
         query = """
             SELECT * FROM well_optimizations 
-            WHERE field_optimization_id = %s
+            WHERE field_optimization_id = ?
             """
         results = self.db.execute_query(query, (opt_id,))
         return [WellOptimization.from_dict(row) for row in results]
