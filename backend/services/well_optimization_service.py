@@ -11,11 +11,11 @@ class WellOptimizationService:
         """Create well optimization in a single transaction"""
         try:
             well_optimization = WellOptimization()
-            well_optimization.optimization_id = optimization_id
-            well_optimization.well_number = well_number
+            well_optimization.optimization_id = float(optimization_id)
+            well_optimization.well_number = float(well_number)
             well_optimization.well_name = well_name
-            well_optimization.optimal_production = optimal_production
-            well_optimization.optimal_gas_injection = optimal_gas_injection
+            well_optimization.optimal_production = float(optimal_production)
+            well_optimization.optimal_gas_injection = float(optimal_gas_injection)
             self.well_optimization_repository.save(well_optimization)  
             return True
         except Exception as e:

@@ -9,11 +9,11 @@ class FieldOptimizationService:
     def create_field_optimization(self, total_production: float, total_gas_injection: float, gas_injection_limit: float, oil_price: float, gas_price: float, field_name: str) -> int:
         try:
             opt = FieldOptimization() 
-            opt.total_production = total_production
-            opt.total_gas_injection = total_gas_injection
-            opt.gas_injection_limit = gas_injection_limit
-            opt.oil_price = oil_price
-            opt.gas_price = gas_price
+            opt.total_production = float(total_production)
+            opt.total_gas_injection = float(total_gas_injection)
+            opt.gas_injection_limit = float(gas_injection_limit)
+            opt.oil_price = float(oil_price)
+            opt.gas_price = float(gas_price)
             opt.field_name = field_name
             return self.field_optimization_repository.save(opt)
         except Exception as e:
