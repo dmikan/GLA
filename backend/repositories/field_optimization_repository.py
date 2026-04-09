@@ -15,7 +15,7 @@ class FieldOptimizationRepository:
                     id, execution_date, total_production, total_gas_injection, gas_injection_limit,
                     oil_price, gas_price, field_name
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
         params = (
             new_id,

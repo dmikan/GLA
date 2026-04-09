@@ -12,7 +12,7 @@ class WellOptimizationRepository:
         INSERT INTO well_optimizations (
             field_optimization_id, well_number, well_name,
             optimal_production, optimal_gas_injection
-        ) VALUES (?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s)
         """
         try:
             params = (
@@ -30,7 +30,7 @@ class WellOptimizationRepository:
     def find_by_optimization_id(self, opt_id: int) -> List[WellOptimization]:
         query = """
             SELECT * FROM well_optimizations 
-            WHERE field_optimization_id = ?
+            WHERE field_optimization_id = %s
             """
         results = self.db.execute_query(query, (opt_id,))
         return [WellOptimization.from_dict(row) for row in results]
